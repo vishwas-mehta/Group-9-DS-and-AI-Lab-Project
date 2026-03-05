@@ -339,7 +339,38 @@ padding='max_length', max_length=MAX_SEQ_LEN)
 
 All preprocessing steps are implemented in transformer_fraud_classifier_v3.1. Dataset splits, Optuna sampling, and sklearn baselines use random_state=42.
 
-# 8\. Items to Address Before Final Submission
+# 8\. Agentic AI & Real-Time Data Extraction
+
+To enable the collection of a real-time dataset from unstructured files, a LangChain v1.x ReAct agent was implemented. This agent parses diverse document formats and converts raw job postings into structured data matching the primary dataset schema.
+
+## 8.1 Agent Capabilities & Architecture
+
+The Agentic AI engineering effort focused on high-precision structured extraction:
+
+| **Component** | **Detail** |
+| --- | --- |
+| **Framework** | LangChain v1.x (with LangGraph `create_react_agent`) |
+| **Supported Formats** | `.pdf`, `.docx`, `.doc`, `.html`, `.htm`, `.md`, `.txt` |
+| **Extraction Engine** | OpenAI `GPT-4o-mini` utilizing `.with_structured_output()` |
+| **Schema Alignment** | Validates and extracts 18 key features (Title, Description, Benefits, etc.) |
+| **Integration Layer** | CLI agent and library interface for seamless real-world data ingestion |
+
+## 8.2 Agent Flow Diagram
+
+The following diagram illustrates the agentic pipeline for processing an unstructured job posting document:
+
+```mermaid
+graph TD
+    A[User supplies file path] --> B[ReAct Agent<br>LangGraph create_react_agent]
+    B -->|Decides to call tool| C[extract_job_posting_features]
+    C --> D[1. Loads raw text via LangChain document loaders]
+    D --> E[2. Sends text + structured prompt to GPT-4o-mini]
+    E --> F[3. Returns validated JSON]
+    F --> B
+    B --> G[Agent formats & prints result]
+```
+
+# 9\. Items to Address Before Final Submission
 
 The following gaps were identified during the Milestone 2 review and should be resolved prior to model training and Milestone 3:
 
