@@ -4,13 +4,17 @@ models/*/optimizer.pt
 models/*/scheduler.pt
 models/*/scaler.pt
 models/*/rng_state.pth
+models/
+
+#Datasets
+data/
 
 # Test probabilities
 *.npy
 
 # Checkpoints
 checkpoints/
-
+.ipynb_checkpoints
 # Python
 __pycache__/
 *.pyc
