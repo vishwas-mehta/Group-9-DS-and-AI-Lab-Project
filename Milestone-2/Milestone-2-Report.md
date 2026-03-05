@@ -2,10 +2,6 @@
 
 ## Transformer-Based Fake Job Posting Detection
 
-Section 4.1 - AI-Powered Fraud Classification System
-
-March 2026
-
 # 1\. Data Sources
 
 This project draws on two publicly available datasets and a conditionally applied synthetic augmentation strategy. All sources were verified for accessibility, licensing compliance, and suitability for the fraud classification task prior to use.
