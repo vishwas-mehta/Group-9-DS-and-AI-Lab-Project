@@ -1,3 +1,12 @@
+
+<div align="center">
+  <img src="static/Milestone2Summary.png" alt="Proposed System Workflow Architecture" width="800">
+  <br>
+  <em>Figure 1: High-level architecture of the proposed agentic AI fake job detection system.</em>
+</div>
+
+
+
 # Fraud Job Posting Classifier
 
 Fine-tuned RoBERTa-base model for detecting fraudulent job postings using Focal Loss and Optuna-tuned hyperparameters.
