@@ -160,12 +160,12 @@
             });
 
             if (response.success) {
-                console.log("Analysis result:", response.data);
+                showResultsOverlay(response.data, jobData);
             } else {
-                console.error("Analysis error:", response.error);
+                showErrorOverlay(response.error);
             }
         } catch (error) {
-            console.error("Error:", error.message);
+            showErrorOverlay(error.message);
         } finally {
             // Reset button
             btn.classList.remove("ljp-loading");
@@ -181,6 +181,104 @@
         const div = document.createElement("div");
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    // ── Results Overlay ──────────────────────────────────────
+    function showResultsOverlay(result, jobData) {
+        removeOverlay();
+
+        const verdictConfig = {
+            SAFE: { emoji: "✅", label: "Safe to Apply", color: "#00c853", bg: "rgba(0, 200, 83, 0.1)" },
+            SUSPICIOUS: { emoji: "⚠️", label: "Suspicious", color: "#ff9100", bg: "rgba(255, 145, 0, 0.1)" },
+            LIKELY_FAKE: { emoji: "❌", label: "Likely Fake", color: "#ff1744", bg: "rgba(255, 23, 68, 0.1)" },
+        };
+
+        const v = verdictConfig[result.verdict] || verdictConfig["SUSPICIOUS"];
+
+        const overlay = document.createElement("div");
+        overlay.id = "ljp-overlay";
+        overlay.innerHTML = `
+      <div class="ljp-overlay-backdrop" id="ljp-backdrop"></div>
+      <div class="ljp-results-panel">
+        <div class="ljp-results-header">
+          <div class="ljp-results-title">
+            <span class="ljp-logo">🛡️</span>
+            Job Legitimacy Report
+          </div>
+          <button class="ljp-close-btn" id="ljp-close-btn">✕</button>
+        </div>
+        <div class="ljp-job-info">
+          <div class="ljp-job-name">${escapeHtml(jobData.title || "Unknown Job")}</div>
+          <div class="ljp-company-name">${escapeHtml(jobData.company || "Unknown Company")}</div>
+        </div>
+        <div class="ljp-verdict-card" style="background: ${v.bg}; border-left: 4px solid ${v.color};">
+          <div class="ljp-verdict-row">
+            <span class="ljp-verdict-emoji">${v.emoji}</span>
+            <div>
+              <div class="ljp-verdict-label" style="color: ${v.color};">${v.label}</div>
+              <div class="ljp-confidence">Confidence: ${result.confidence}%</div>
+            </div>
+          </div>
+          <div class="ljp-confidence-bar">
+            <div class="ljp-confidence-fill" style="width: ${result.confidence}%; background: ${v.color};"></div>
+          </div>
+        </div>
+        <div class="ljp-section">
+          <div class="ljp-section-title">📋 Summary</div>
+          <p class="ljp-summary">${escapeHtml(result.summary || "")}</p>
+        </div>
+        <div class="ljp-section">
+          <div class="ljp-section-title">🔎 Key Findings</div>
+          <ul class="ljp-reasons">
+            ${(result.reasons || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("")}
+          </ul>
+        </div>
+        ${result.tips ? `
+        <div class="ljp-section ljp-tip">
+          <div class="ljp-section-title">💡 Tip</div>
+          <p>${escapeHtml(result.tips)}</p>
+        </div>` : ""}
+        <div class="ljp-footer">Powered by Gemini AI · Results are advisory only</div>
+      </div>
+    `;
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("ljp-visible"));
+
+        document.getElementById("ljp-close-btn").addEventListener("click", removeOverlay);
+        document.getElementById("ljp-backdrop").addEventListener("click", removeOverlay);
+    }
+
+    function showErrorOverlay(message) {
+        removeOverlay();
+
+        const overlay = document.createElement("div");
+        overlay.id = "ljp-overlay";
+        overlay.innerHTML = `
+      <div class="ljp-overlay-backdrop" id="ljp-backdrop"></div>
+      <div class="ljp-results-panel ljp-error-panel">
+        <div class="ljp-results-header">
+          <div class="ljp-results-title"><span class="ljp-logo">⚠️</span> Analysis Error</div>
+          <button class="ljp-close-btn" id="ljp-close-btn">✕</button>
+        </div>
+        <div class="ljp-error-message"><p>${escapeHtml(message)}</p></div>
+        <div class="ljp-footer">Make sure your Gemini API key is set correctly</div>
+      </div>
+    `;
+
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add("ljp-visible"));
+
+        document.getElementById("ljp-close-btn").addEventListener("click", removeOverlay);
+        document.getElementById("ljp-backdrop").addEventListener("click", removeOverlay);
+    }
+
+    function removeOverlay() {
+        const overlay = document.getElementById("ljp-overlay");
+        if (overlay) {
+            overlay.classList.remove("ljp-visible");
+            setTimeout(() => overlay.remove(), 300);
+        }
     }
 
     // ── Initialize ───────────────────────────────────────────
