@@ -130,10 +130,57 @@
         return el ? el.textContent.trim() : null;
     }
 
-    // ── Handle Analyze Click (placeholder) ───────────────────
+    // ── Handle Analyze Click ─────────────────────────────────
     async function handleAnalyzeClick() {
-        const jobData = scrapeJobData();
-        console.log("Scraped job data:", jobData);
+        const btn = document.getElementById("ljp-analyze-btn");
+
+        // Show loading state
+        btn.classList.add("ljp-loading");
+        btn.innerHTML = `
+      <span class="ljp-spinner"></span>
+      <span class="ljp-btn-text">Analyzing...</span>
+    `;
+        btn.disabled = true;
+
+        try {
+            // Scrape data
+            const jobData = scrapeJobData();
+
+            // Validate we have something to analyze
+            if (!jobData.title && !jobData.description) {
+                throw new Error(
+                    "No job data found on this page. Make sure you're viewing a job listing."
+                );
+            }
+
+            // Send to background script
+            const response = await chrome.runtime.sendMessage({
+                type: "ANALYZE_JOB",
+                data: jobData,
+            });
+
+            if (response.success) {
+                console.log("Analysis result:", response.data);
+            } else {
+                console.error("Analysis error:", response.error);
+            }
+        } catch (error) {
+            console.error("Error:", error.message);
+        } finally {
+            // Reset button
+            btn.classList.remove("ljp-loading");
+            btn.innerHTML = `
+        <span class="ljp-btn-icon">🔍</span>
+        <span class="ljp-btn-text">Analyze Job</span>
+      `;
+            btn.disabled = false;
+        }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     // ── Initialize ───────────────────────────────────────────
