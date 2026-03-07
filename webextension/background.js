@@ -80,3 +80,55 @@ ${jobData.companyDescription || "Not found"}`;
 
     return { systemInstruction, userMessage };
 }
+
+async function callGeminiAPI(apiKey, prompt) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+    const body = {
+        system_instruction: {
+            parts: [{ text: prompt.systemInstruction }],
+        },
+        contents: [
+            {
+                role: "user",
+                parts: [{ text: prompt.userMessage }],
+            },
+        ],
+        generationConfig: {
+            temperature: 0.3,
+            topP: 0.8,
+            maxOutputTokens: 1024,
+        },
+    };
+
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+            `Gemini API error (${response.status}): ${errorData.error?.message || "Unknown error"}`
+        );
+    }
+
+    const data = await response.json();
+
+    // Extract text from Gemini response
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+        throw new Error("Empty response from Gemini API");
+    }
+
+    // Parse JSON from response (handle possible markdown code fences)
+    const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+    try {
+        const parsed = JSON.parse(cleanedText);
+        return parsed;
+    } catch (e) {
+        throw new Error("Failed to parse Gemini response as JSON. Raw: " + text.substring(0, 200));
+    }
+}
