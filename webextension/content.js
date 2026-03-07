@@ -88,6 +88,33 @@
             getTextContent(".compensation__salary") ||
             "";
 
+        // Job criteria items (Seniority, Employment Type, etc.)
+        const criteriaItems = document.querySelectorAll(
+            ".job-details-jobs-unified-top-card__job-insight, .jobs-unified-top-card__job-insight, .description__job-criteria-item"
+        );
+        criteriaItems.forEach((item) => {
+            const label = (
+                item.querySelector(
+                    ".job-details-jobs-unified-top-card__job-insight-view-model-secondary, h3"
+                )?.textContent || ""
+            ).trim().toLowerCase();
+            const value = (
+                item.querySelector("span:last-child, .description__job-criteria-text")
+                    ?.textContent || ""
+            ).trim();
+
+            if (label.includes("seniority")) data.seniorityLevel = value;
+            if (label.includes("employment")) data.employmentType = value;
+            if (label.includes("function")) data.jobFunction = value;
+            if (label.includes("industr")) data.industries = value;
+        });
+
+        // Company About / Description
+        data.companyDescription =
+            getTextContent(".jobs-company__company-description") ||
+            getTextContent(".top-card-layout__card .topcard__flavor--metadata") ||
+            "";
+
         // Clean up whitespace
         Object.keys(data).forEach((key) => {
             if (typeof data[key] === "string") {
