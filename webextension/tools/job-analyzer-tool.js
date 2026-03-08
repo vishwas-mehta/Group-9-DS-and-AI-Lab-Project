@@ -11,7 +11,7 @@ import { BaseTool, ToolResult } from "../lib/langchain-core.js";
  * Centralized here so it's easy to modify or switch models.
  */
 const GEMINI_CONFIG = {
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
     temperature: 0.3,
     topP: 0.8,
