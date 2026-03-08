@@ -1,134 +1,280 @@
 // ============================================================
-// Background Service Worker — Gemini API Communication
-// This is the file you'll swap out for your agentic flow later.
+// Background Service Worker — Pipeline Orchestrator
+// This is the central hub. It receives job data from the content
+// script, runs the LangChain-inspired analysis pipeline, and
+// returns results.
+//
+// Architecture:
+//   content.js → sendMessage → background.js → Pipeline → Gemini
+//                                                  ↓
+//   content.js ← sendResponse ← background.js ← Results
+// ============================================================
+
+import { ToolRegistry } from "./lib/langchain-core.js";
+import {
+    PipelineBuilder,
+    PipelineConfig,
+    ContentAggregatorTool,
+} from "./lib/pipeline.js";
+import { DetectLinksTool } from "./tools/link-detector.js";
+import { LinkScraperTool } from "./tools/link-scraper.js";
+import { JobAnalyzerTool } from "./tools/job-analyzer-tool.js";
+
+// ============================================================
+// Tool Registry Setup — Register all tools at startup
+// ============================================================
+
+const registry = new ToolRegistry();
+
+// Register core tools
+registry.register(new DetectLinksTool(), "scraping");
+registry.register(new LinkScraperTool(), "scraping");
+registry.register(new ContentAggregatorTool(), "processing");
+registry.register(new JobAnalyzerTool(), "analysis");
+
+console.log("[Background] Tool registry initialized:");
+console.log("[Background] Registered tools:", registry.listTools());
+
+// ============================================================
+// Message Handlers
 // ============================================================
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === "ANALYZE_JOB") {
-        handleAnalyzeJob(request.data)
-            .then((result) => sendResponse({ success: true, data: result }))
-            .catch((error) =>
-                sendResponse({ success: false, error: error.message })
-            );
-        return true;
+    switch (request.type) {
+        case "ANALYZE_JOB":
+            handleAnalyzeJob(request.data, sender)
+                .then((result) => sendResponse({ success: true, data: result }))
+                .catch((error) =>
+                    sendResponse({ success: false, error: error.message })
+                );
+            return true; // Keep message channel open for async response
+
+        case "ANALYZE_JOB_QUICK":
+            handleAnalyzeJobQuick(request.data, sender)
+                .then((result) => sendResponse({ success: true, data: result }))
+                .catch((error) =>
+                    sendResponse({ success: false, error: error.message })
+                );
+            return true;
+
+        case "ANALYZE_JOB_DEEP":
+            handleAnalyzeJobDeep(request.data, sender)
+                .then((result) => sendResponse({ success: true, data: result }))
+                .catch((error) =>
+                    sendResponse({ success: false, error: error.message })
+                );
+            return true;
+
+        case "GET_PIPELINE_STATUS":
+            sendResponse({
+                success: true,
+                data: {
+                    tools: registry.listTools(),
+                    stats: registry.getAllStats(),
+                },
+            });
+            return false;
+
+        case "GET_TOOL_STATS":
+            sendResponse({
+                success: true,
+                data: registry.getAllStats(),
+            });
+            return false;
+
+        default:
+            console.warn("[Background] Unknown message type:", request.type);
+            sendResponse({
+                success: false,
+                error: `Unknown message type: ${request.type}`,
+            });
+            return false;
     }
 });
 
-async function handleAnalyzeJob(jobData) {
-    const apiKey = await getApiKey();
-    if (!apiKey) {
-        throw new Error(
-            "No Gemini API key found. Click the extension icon to set your API key."
-        );
-    }
-    const prompt = buildPrompt(jobData);
-    const result = await callGeminiAPI(apiKey, prompt);
-    return result;
-}
+// ============================================================
+// Pipeline Execution Handlers
+// ============================================================
 
-function getApiKey() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get(["geminiApiKey"], (result) => {
-            resolve(result.geminiApiKey || null);
-        });
-    });
-}
+/**
+ * Standard analysis — detects links, scrapes them, aggregates, analyzes.
+ * 
+ * @param {Object} data - Job data + DOM links from content script
+ * @param {Object} sender - Chrome sender info
+ * @returns {Promise<Object>}
+ */
+async function handleAnalyzeJob(data, sender) {
+    const { jobData, domLinks = [] } = data;
 
-function buildPrompt(jobData) {
-    const systemInstruction = `You are a Job Legitimacy Analyzer. Your role is to analyze job listings and determine whether they are legitimate, suspicious, or potentially fake.
+    console.log("[Background] Starting standard analysis for:", jobData.title);
 
-Analyze the following job listing data scraped from LinkedIn. Consider these red flags:
-- Vague job descriptions with no specific responsibilities
-- Unrealistically high salary for the role/experience level
-- No company information or very new company
-- Requests for personal information or upfront payments
-- Poor grammar and spelling
-- Too-good-to-be-true benefits
-- No clear job requirements
-- Generic company descriptions
-- Suspicious contact methods
-- Immediate hire without interview promises
-
-Respond ONLY with valid JSON in this exact format (no markdown, no code fences):
-{
-  "verdict": "SAFE" | "SUSPICIOUS" | "LIKELY_FAKE",
-  "confidence": <number 1-100>,
-  "reasons": ["reason1", "reason2", "reason3"],
-  "summary": "A brief 2-3 sentence summary of your analysis",
-  "tips": "One actionable tip for the applicant"
-}`;
-
-    const userMessage = `Here is the job listing data to analyze:
-
-Job Title: ${jobData.title || "Not found"}
-Company: ${jobData.company || "Not found"}
-Location: ${jobData.location || "Not found"}
-Workplace Type: ${jobData.workplaceType || "Not found"}
-Posted Date: ${jobData.postedDate || "Not found"}
-Applicant Count: ${jobData.applicantCount || "Not found"}
-Salary/Pay: ${jobData.salary || "Not found"}
-Seniority Level: ${jobData.seniorityLevel || "Not found"}
-Employment Type: ${jobData.employmentType || "Not found"}
-Job Function: ${jobData.jobFunction || "Not found"}
-Industries: ${jobData.industries || "Not found"}
-
-Job Description:
-${jobData.description || "No description found"}
-
-Company Description:
-${jobData.companyDescription || "Not found"}`;
-
-    return { systemInstruction, userMessage };
-}
-
-async function callGeminiAPI(apiKey, prompt) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-    const body = {
-        system_instruction: {
-            parts: [{ text: prompt.systemInstruction }],
-        },
-        contents: [
-            {
-                role: "user",
-                parts: [{ text: prompt.userMessage }],
-            },
-        ],
-        generationConfig: {
-            temperature: 0.3,
-            topP: 0.8,
-            maxOutputTokens: 1024,
-        },
-    };
-
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+    // Build pipeline with standard config
+    const config = new PipelineConfig({
+        enableLinkScraping: true,
+        maxLinksToScrape: 5,
+        linkTimeoutMs: 10000,
+        analysisDepth: "standard",
     });
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-            `Gemini API error (${response.status}): ${errorData.error?.message || "Unknown error"}`
-        );
+    const pipeline = PipelineBuilder.createDefault(registry, config);
+
+    // Log pipeline description
+    console.log("[Background] Pipeline:\n" + pipeline.describe());
+
+    // Send progress updates to content script
+    const tabId = sender.tab?.id;
+    if (tabId) {
+        pipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
+            sendProgressUpdate(tabId, {
+                step: stepIndex + 1,
+                totalSteps,
+                label: stepLabel,
+                status: "running",
+            });
+        };
+
+        pipeline.onStepComplete = ({ stepIndex, stepLabel, totalSteps, result }) => {
+            sendProgressUpdate(tabId, {
+                step: stepIndex + 1,
+                totalSteps,
+                label: stepLabel,
+                status: result.success ? "complete" : "failed",
+            });
+        };
     }
 
-    const data = await response.json();
+    // Run the pipeline
+    const chainResult = await pipeline.run(
+        { jobData, domLinks },
+        { tabId, url: sender.tab?.url }
+    );
 
-    // Extract text from Gemini response
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-        throw new Error("Empty response from Gemini API");
+    if (!chainResult.success) {
+        throw new Error(chainResult.error);
     }
 
-    // Parse JSON from response (handle possible markdown code fences)
-    const cleanedText = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    // Return the analysis result
+    return chainResult.data;
+}
 
+/**
+ * Quick analysis — skips link scraping for faster results.
+ * 
+ * @param {Object} data
+ * @param {Object} sender
+ * @returns {Promise<Object>}
+ */
+async function handleAnalyzeJobQuick(data, sender) {
+    const { jobData } = data;
+
+    console.log("[Background] Starting QUICK analysis for:", jobData.title);
+
+    const config = PipelineConfig.quick();
+
+    // Build pipeline without link scraping
+    const pipeline = new PipelineBuilder(registry, config)
+        .withLinkDetection()
+        // Skip link scraping
+        .withContentAggregation()
+        .withJobAnalysis()
+        .build("quick_analysis_pipeline");
+
+    const chainResult = await pipeline.run(
+        { jobData, domLinks: [] },
+        { tabId: sender.tab?.id }
+    );
+
+    if (!chainResult.success) {
+        throw new Error(chainResult.error);
+    }
+
+    return chainResult.data;
+}
+
+/**
+ * Deep analysis — maximum link scraping and thorough AI analysis.
+ * 
+ * @param {Object} data
+ * @param {Object} sender
+ * @returns {Promise<Object>}
+ */
+async function handleAnalyzeJobDeep(data, sender) {
+    const { jobData, domLinks = [] } = data;
+
+    console.log("[Background] Starting DEEP analysis for:", jobData.title);
+
+    const config = PipelineConfig.deep();
+
+    const pipeline = PipelineBuilder.createDefault(registry, config);
+
+    // Send progress updates
+    const tabId = sender.tab?.id;
+    if (tabId) {
+        pipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
+            sendProgressUpdate(tabId, {
+                step: stepIndex + 1,
+                totalSteps,
+                label: stepLabel,
+                status: "running",
+            });
+        };
+    }
+
+    const chainResult = await pipeline.run(
+        { jobData, domLinks },
+        { tabId, url: sender.tab?.url }
+    );
+
+    if (!chainResult.success) {
+        throw new Error(chainResult.error);
+    }
+
+    return chainResult.data;
+}
+
+// ============================================================
+// Utility Functions
+// ============================================================
+
+/**
+ * Send a progress update to the content script.
+ * 
+ * @param {number} tabId
+ * @param {Object} progress
+ */
+function sendProgressUpdate(tabId, progress) {
     try {
-        const parsed = JSON.parse(cleanedText);
-        return parsed;
-    } catch (e) {
-        throw new Error("Failed to parse Gemini response as JSON. Raw: " + text.substring(0, 200));
+        chrome.tabs.sendMessage(tabId, {
+            type: "ANALYSIS_PROGRESS",
+            data: progress,
+        });
+    } catch (error) {
+        // Tab might have been closed, ignore
+        console.warn("[Background] Failed to send progress update:", error);
     }
 }
+
+// ============================================================
+// Extension Lifecycle Events
+// ============================================================
+
+/**
+ * Handle extension installation or update.
+ */
+chrome.runtime.onInstalled.addListener((details) => {
+    console.log("[Background] Extension installed/updated:", details.reason);
+
+    if (details.reason === "install") {
+        console.log("[Background] First install — welcome!");
+    } else if (details.reason === "update") {
+        console.log(
+            `[Background] Updated from v${details.previousVersion} to v2.0.0`
+        );
+    }
+});
+
+/**
+ * Handle service worker startup.
+ */
+console.log("[Background] Service worker started. Pipeline ready.");
+console.log("[Background] Available analysis modes: standard, quick, deep");
