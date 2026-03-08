@@ -112,7 +112,8 @@ export class PipelineBuilder {
                 toolName: "link_detector",
                 label: "Detect Links in Job Description",
                 inputTransform: (input) => ({
-                    jobData: input,
+                    jobData: input.jobData || input,
+                    domLinks: input.domLinks || [],
                     config: this.config,
                 }),
             })

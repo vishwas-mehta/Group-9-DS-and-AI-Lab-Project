@@ -122,8 +122,13 @@ export class TextExtractor {
             });
         }
 
+        // Try DOMParser first (available in Chrome 114+ service workers)
+        // Falls back to regex-based extraction for older versions
         try {
-            // Parse HTML using DOMParser
+            if (typeof DOMParser === "undefined") {
+                throw new ReferenceError("DOMParser not available");
+            }
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
 
@@ -146,16 +151,95 @@ export class TextExtractor {
                     preserveStructure
                 );
                 metadata.contentSource = "main_content_area";
-            } else {
+            } else if (doc.body) {
                 // Fallback: extract from body
                 text = TextExtractor._extractFromElement(
                     doc.body,
                     preserveStructure
                 );
                 metadata.contentSource = "full_body_fallback";
+            } else {
+                // Body is null (malformed HTML), use regex fallback
+                throw new Error("DOMParser produced no body element");
             }
 
             // Clean and truncate
+            text = TextExtractor._cleanText(text, maxLength);
+
+            return new ExtractedContent({
+                text,
+                metadata,
+                success: text.length > 0,
+                wordCount: text.split(/\s+/).filter(Boolean).length,
+            });
+        } catch (domError) {
+            // Fallback: regex-based extraction (works in all environments)
+            console.warn(
+                "[TextExtractor] DOMParser unavailable or failed, using regex fallback:",
+                domError.message
+            );
+            return TextExtractor._extractWithRegex(html, maxLength);
+        }
+    }
+
+    /**
+     * Regex-based fallback extraction for environments without DOMParser.
+     * Less accurate than DOM-based extraction but works everywhere.
+     * 
+     * @param {string} html - Raw HTML string
+     * @param {number} maxLength - Max output length
+     * @returns {ExtractedContent}
+     */
+    static _extractWithRegex(html, maxLength) {
+        const metadata = {};
+
+        try {
+            // Extract title
+            const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+            if (titleMatch) metadata.pageTitle = titleMatch[1].trim();
+
+            // Extract meta description
+            const descMatch = html.match(
+                /<meta[^>]*name=["']description["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i
+            );
+            if (descMatch) metadata.metaDescription = descMatch[1].trim();
+
+            // Extract OG title
+            const ogTitleMatch = html.match(
+                /<meta[^>]*property=["']og:title["'][^>]*content=["']([\s\S]*?)["'][^>]*>/i
+            );
+            if (ogTitleMatch) metadata.ogTitle = ogTitleMatch[1].trim();
+
+            metadata.contentSource = "regex_fallback";
+
+            // Remove script and style blocks
+            let text = html
+                .replace(/<script[\s\S]*?<\/script>/gi, "")
+                .replace(/<style[\s\S]*?<\/style>/gi, "")
+                .replace(/<noscript[\s\S]*?<\/noscript>/gi, "")
+                .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+                .replace(/<header[\s\S]*?<\/header>/gi, "")
+                .replace(/<footer[\s\S]*?<\/footer>/gi, "");
+
+            // Convert block-level tags to newlines
+            text = text
+                .replace(/<\/?(p|div|br|h[1-6]|li|tr|section|article)[^>]*>/gi, "\n")
+                .replace(/<\/?(ul|ol|table|tbody|thead)[^>]*>/gi, "\n");
+
+            // Strip all remaining HTML tags
+            text = text.replace(/<[^>]*>/g, " ");
+
+            // Decode common HTML entities
+            text = text
+                .replace(/&amp;/g, "&")
+                .replace(/&lt;/g, "<")
+                .replace(/&gt;/g, ">")
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&nbsp;/g, " ")
+                .replace(/&#\d+;/g, " ");
+
+            // Clean up whitespace
             text = TextExtractor._cleanText(text, maxLength);
 
             return new ExtractedContent({
@@ -169,7 +253,7 @@ export class TextExtractor {
                 text: "",
                 metadata: {},
                 success: false,
-                error: `Extraction failed: ${error.message}`,
+                error: `Regex extraction failed: ${error.message}`,
             });
         }
     }
@@ -340,21 +424,26 @@ export class TextExtractor {
         }
 
         const lines = [];
-        const walker = document.createTreeWalker(
+
+        // In service worker context, there's no global `document`.
+        // Use the element's ownerDocument instead.
+        // NodeFilter.SHOW_ELEMENT = 1, NodeFilter.SHOW_TEXT = 4
+        // Node.TEXT_NODE = 3, Node.ELEMENT_NODE = 1
+        const ownerDoc = element.ownerDocument || element;
+        const walker = ownerDoc.createTreeWalker(
             element,
-            NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
-            null,
-            false
+            1 | 4, // SHOW_ELEMENT | SHOW_TEXT
+            null
         );
 
         let currentNode;
         while ((currentNode = walker.nextNode())) {
-            if (currentNode.nodeType === Node.TEXT_NODE) {
+            if (currentNode.nodeType === 3) { // TEXT_NODE
                 const text = currentNode.textContent.trim();
                 if (text) {
                     lines.push(text);
                 }
-            } else if (currentNode.nodeType === Node.ELEMENT_NODE) {
+            } else if (currentNode.nodeType === 1) { // ELEMENT_NODE
                 const tagName = currentNode.tagName.toLowerCase();
 
                 // Add blank lines for block-level elements
