@@ -130,6 +130,131 @@
         return el ? el.textContent.trim() : null;
     }
 
+    // ── Extract Links from Job Description DOM ────────────────
+    function extractLinksFromDOM() {
+        const links = [];
+        const linkSeen = new Set();
+
+        // Selectors for job description areas
+        const descriptionSelectors = [
+            '.jobs-description__content',
+            '.jobs-description',
+            '.job-details-jobs-unified-top-card__job-insight',
+            '.jobs-unified-top-card__job-insight',
+            '.jobs-box__html-content',
+            '.jobs-description-content__text',
+            '[class*="description"]',
+            '[class*="job-details"]',
+        ];
+
+        // Find the description container
+        let descContainer = null;
+        for (const sel of descriptionSelectors) {
+            descContainer = document.querySelector(sel);
+            if (descContainer) break;
+        }
+
+        // If we found a description container, extract links from it
+        if (descContainer) {
+            const anchors = descContainer.querySelectorAll('a[href]');
+            for (const anchor of anchors) {
+                const href = anchor.href;
+                const text = anchor.textContent.trim();
+
+                if (href && !linkSeen.has(href) && href.startsWith('http')) {
+                    linkSeen.add(href);
+                    links.push({
+                        url: href,
+                        text: text || href,
+                        source: 'job_description_dom',
+                    });
+                }
+            }
+        }
+
+        // Also check the "About the company" section
+        const aboutSection = document.querySelector('.jobs-company__box');
+        if (aboutSection) {
+            const aboutAnchors = aboutSection.querySelectorAll('a[href]');
+            for (const anchor of aboutAnchors) {
+                const href = anchor.href;
+                if (href && !linkSeen.has(href) && href.startsWith('http')) {
+                    linkSeen.add(href);
+                    links.push({
+                        url: href,
+                        text: anchor.textContent.trim() || href,
+                        source: 'company_section_dom',
+                    });
+                }
+            }
+        }
+
+        // Check for links in the "How you match" or insights section
+        const insightLinks = document.querySelectorAll(
+            '.job-details-how-you-match a[href], .jobs-unified-top-card a[href]'
+        );
+        for (const anchor of insightLinks) {
+            const href = anchor.href;
+            if (href && !linkSeen.has(href) && href.startsWith('http')) {
+                linkSeen.add(href);
+                links.push({
+                    url: href,
+                    text: anchor.textContent.trim() || href,
+                    source: 'insights_dom',
+                });
+            }
+        }
+
+        console.log(`[Content] Extracted ${links.length} links from DOM`);
+        return links;
+    }
+
+    // ── Progress Indicator ────────────────────────────────────
+    function showProgressIndicator(progress) {
+        let indicator = document.getElementById('ljp-progress');
+
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'ljp-progress';
+            document.body.appendChild(indicator);
+        }
+
+        const percentage = Math.round((progress.step / progress.totalSteps) * 100);
+        const statusEmoji = progress.status === 'complete' ? '✅' :
+            progress.status === 'failed' ? '❌' : '⏳';
+
+        indicator.innerHTML = `
+            <div class="ljp-progress-content">
+                <div class="ljp-progress-header">🛡️ Analyzing Job</div>
+                <div class="ljp-progress-step">
+                    ${statusEmoji} Step ${progress.step}/${progress.totalSteps}: ${progress.label}
+                </div>
+                <div class="ljp-progress-bar-container">
+                    <div class="ljp-progress-bar-fill" style="width: ${percentage}%"></div>
+                </div>
+                <div class="ljp-progress-percent">${percentage}%</div>
+            </div>
+        `;
+
+        indicator.classList.add('ljp-progress-visible');
+
+        // Auto-hide after last step completes
+        if (progress.step === progress.totalSteps &&
+            (progress.status === 'complete' || progress.status === 'failed')) {
+            setTimeout(() => {
+                indicator.classList.remove('ljp-progress-visible');
+                setTimeout(() => indicator.remove(), 300);
+            }, 1500);
+        }
+    }
+
+    // Listen for progress updates from background
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.type === 'ANALYSIS_PROGRESS') {
+            showProgressIndicator(message.data);
+        }
+    });
+
     // ── Handle Analyze Click ─────────────────────────────────
     async function handleAnalyzeClick() {
         const btn = document.getElementById("ljp-analyze-btn");
@@ -143,8 +268,11 @@
         btn.disabled = true;
 
         try {
-            // Scrape data
+            // Scrape job data from LinkedIn DOM
             const jobData = scrapeJobData();
+
+            // Extract links from the job description DOM
+            const domLinks = extractLinksFromDOM();
 
             // Validate we have something to analyze
             if (!jobData.title && !jobData.description) {
@@ -153,10 +281,15 @@
                 );
             }
 
-            // Send to background script
+            console.log(`[Content] Sending to pipeline: ${Object.keys(jobData).length} fields, ${domLinks.length} DOM links`);
+
+            // Send job data + DOM links to background pipeline
             const response = await chrome.runtime.sendMessage({
                 type: "ANALYZE_JOB",
-                data: jobData,
+                data: {
+                    jobData: jobData,
+                    domLinks: domLinks,
+                },
             });
 
             if (response.success) {
