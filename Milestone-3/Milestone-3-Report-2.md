@@ -328,3 +328,14 @@ All dependencies are listed in `requirements.txt`:
 | `lightgbm` | latest | Gradient boosting (rule discovery) |
 | `shap` | latest | Explainability (SHAP values) |
 | `interpret` | latest | Interpretable ML (EBM notebooks) |
+
+---
+
+## 7. References
+
+1. Liu, Y., Ott, M., Goyal, N., et al. (2019). *RoBERTa: A Robustly Optimized BERT Pretraining Approach*. arXiv. <https://arxiv.org/abs/1907.11692>
+2. Lin, T.-Y., Goyal, P., Girshick, R., He, K., & Dollár, P. (2017). *Focal Loss for Dense Object Detection*. ICCV 2017. <https://arxiv.org/abs/1708.02002>
+3. Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M. (2019). *Optuna: A Next-generation Hyperparameter Optimization Framework*. KDD 2019. <https://arxiv.org/abs/1907.10902>
+4. Devlin, J., Chang, M. W., Lee, K., & Toutanova, K. (2019). *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding*. NAACL-HLT 2019. <https://arxiv.org/abs/1810.04805>
+5. EMSCAD Dataset — Employment Scam Aegean Dataset. University of the Aegean. Available at: <https://www.kaggle.com/datasets/shivamb/real-or-fake-fake-jobposting-prediction>
+6. Mahfouz, E. et al. (2019). *Employment Scam Detection Using BERT-Based Text Classification and Metadata Feature Engineering*. Applied Sciences.
