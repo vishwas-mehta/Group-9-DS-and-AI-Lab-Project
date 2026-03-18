@@ -109,3 +109,171 @@ The best hyperparameters found are used as constants in `src/train.py`:
 | Epochs | 9 (early stopped at 7) |
 | Focal gamma (γ) | 1.6920 |
 | Fraud class weight (α₁) | 2.8251 |
+
+---
+
+## 4. End-to-End Pipeline Setup
+
+### 4.1 Project Structure
+
+```
+Group-9-DS-and-AI-Lab-Project/
+├── src/
+│   ├── train.py                    # Training script
+│   ├── eval.py                     # Evaluation + inference script
+│   ├── __init__.py
+│   └── utils/
+│       ├── __init__.py             # Public API exports
+│       ├── data.py                 # Data loading and text construction
+│       ├── focal_loss.py           # FocalLoss + FocalLossTrainer
+│       └── metrics.py              # Metric computation + threshold sweep
+├── src/tools/
+│   └── metadata_detector/          # Rule-based metadata anomaly detector
+│       ├── anomaly_model.py
+│       ├── detector.py
+│       ├── metadata_preprocessing.py
+│       └── rules_engine.py
+├── AgenticWork/
+│   └── job_parser_agent.py         # GPT-based structured feature extractor
+├── notebook/
+│   ├── transformer_fraud_classifier_v3_1.ipynb
+│   └── rule_discovery_ebm.ipynb
+├── webextension/                   # Chrome Extension (LinkedIn Job Predictor)
+├── requirements.txt
+└── README.md
+```
+
+### 4.2 Data Pipeline (`src/utils/data.py`)
+
+The data pipeline transforms the raw [Fake Job Postings](https://www.kaggle.com/datasets/shivamb/real-or-fake-fake-jobposting-prediction) CSV (17,880 rows, 4.8% fraud) into model-ready inputs.
+
+#### Step 1 — Feature Engineering: `build_input_text()`
+
+Structured metadata fields and free-text fields are concatenated into a single string separated by `[SEP]` tokens:
+
+```
+Employment Type: Full-time [SEP] Location: New York [SEP] Salary Range: 50000-70000 [SEP]
+We are looking for a software engineer... [SEP] Requirements: 3+ years experience...
+```
+
+**Structured fields** (prefixed with column name):
+`location`, `department`, `salary_range`, `employment_type`, `required_experience`, `required_education`, `industry`, `function`, `has_company_logo`
+
+**Text fields** (raw text):
+`title`, `description`, `requirements`, `company_profile`, `benefits`
+
+Empty, null, and `nan` values are automatically skipped.
+
+#### Step 2 — Stratified Splitting: `load_and_prepare_data()`
+
+| Split | Proportion | Purpose |
+|---|---|---|
+| Train | 70% | Model training |
+| Validation | 15% | Epoch-level evaluation, early stopping, threshold tuning |
+| Test | 15% | Final held-out evaluation |
+
+All splits are **stratified** to preserve the 4.8% fraud rate in every split.
+
+#### Step 3 — Tokenization: `build_hf_datasets()`
+
+Each split is tokenised using the RoBERTa tokenizer:
+
+- **Max sequence length**: 512 tokens
+- **Padding**: `max_length` (all sequences padded to 512)
+- **Truncation**: enabled (longer postings are truncated)
+- **Format**: PyTorch tensors (`input_ids`, `attention_mask`, `labels`)
+
+### 4.3 Loss Function (`src/utils/focal_loss.py`)
+
+Two classes are implemented:
+
+| Class | Purpose |
+|---|---|
+| `FocalLoss(nn.Module)` | Standalone Focal Loss computation — accepts logits + labels, returns scalar loss |
+| `FocalLossTrainer(Trainer)` | HuggingFace Trainer subclass that overrides `compute_loss()` to use `FocalLoss` |
+
+The `FocalLossTrainer` reads `focal_gamma` and `fraud_class_weight` from `self.args` at every forward pass, which allows Optuna to inject different values per trial without reinstantiating the trainer.
+
+### 4.4 Metrics & Evaluation (`src/utils/metrics.py`)
+
+| Function | Purpose |
+|---|---|
+| `compute_metrics()` | HuggingFace-compatible callback — sweeps thresholds 0.05–0.95, selects best F1 |
+| `sweep_thresholds()` | Returns a full DataFrame of precision/recall/F1 at every threshold |
+| `print_target_summary()` | Prints formatted pass/fail table against Mahfouz benchmarks |
+
+**Mahfouz target benchmarks** (the performance targets we aim to meet):
+
+| Metric | Target |
+|---|---|
+| F1 (fraud class) | ≥ 0.91 |
+| Recall (fraud class) | ≥ 0.89 |
+| Precision (fraud class) | ≥ 0.93 |
+| ROC-AUC | ≥ 0.95 |
+
+### 4.5 Training Script (`src/train.py`)
+
+The training script orchestrates the full pipeline:
+
+```
+Raw CSV → load_and_prepare_data() → build_hf_datasets() → FocalLossTrainer → Saved Model
+```
+
+Key features:
+- **Automatic checkpoint recovery** — if training is interrupted, it resumes from the latest checkpoint.
+- **Early stopping** — stops training if validation F1 does not improve for 3 consecutive epochs.
+- **Artifact saving** — saves the model, tokenizer, `inference_config.json`, and `training_summary.json` to the output directory.
+- **Mixed precision (FP16)** — enabled automatically when CUDA is available.
+- **Gradient accumulation** — effective batch size = 16 × 2 = 32.
+
+#### Running Training
+
+```bash
+pip install -r requirements.txt
+
+python src/train.py \
+  --data_path data/fake_job_postings.csv \
+  --output_dir models/roberta-focal-best
+```
+
+### 4.6 Evaluation Script (`src/eval.py`)
+
+The evaluation script supports two modes:
+
+#### Full Test Set Evaluation
+
+```bash
+python src/eval.py \
+  --model_dir models/roberta-focal-best \
+  --data_path data/fake_job_postings.csv
+```
+
+This produces:
+- Classification report (precision, recall, F1 per class)
+- Mahfouz target summary (pass/fail)
+- Threshold sweep analysis
+- Diagnostic plots (confusion matrix, ROC curve, precision-recall curve)
+- `test_results.json` saved to model directory
+
+#### Single Posting Inference
+
+```bash
+python src/eval.py \
+  --model_dir models/roberta-focal-best \
+  --infer
+```
+
+This runs inference on a hardcoded sample posting with obvious fraud signals and outputs the fraud probability, prediction, and threshold used.
+
+### 4.7 Model Hosting
+
+The trained model weights and artifacts are hosted on **HuggingFace Hub**:
+
+🤗 [aditya963/fraud-job-classifier](https://huggingface.co/aditya963/fraud-job-classifier)
+
+```python
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+model     = AutoModelForSequenceClassification.from_pretrained("aditya963/fraud-job-classifier")
+tokenizer = AutoTokenizer.from_pretrained("aditya963/fraud-job-classifier")
+```
