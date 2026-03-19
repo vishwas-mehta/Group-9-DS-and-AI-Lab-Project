@@ -2,6 +2,8 @@
 
 ## Model Architecture Design, Justification & Pipeline Verification
 
+![Overview](Infographics/Head.png)
+
 ### Transformer-Based Fake Job Posting Classifier
 
 **Project Type** NLP Binary Text Classification — Fraud Detection
@@ -18,6 +20,8 @@
 # 1. Dataset Organization
 
 ## 1.1 Directory Structure
+
+![Directory Structure](Infographics/DirectoryStructure.png)
 
 The project follows a clean separation of raw data, processed artifacts, and model outputs:
 
@@ -53,6 +57,8 @@ Q1/                                    ← Project Root
 
 ## 1.2 Data Splits
 
+![Data Splits](Infographics/DataSplit.png)
+
 The dataset is divided using **stratified sampling** to preserve the 4.84% fraud rate in every split:
 
 | Split       | Proportion | Samples  | Fraud Samples | Fraud Rate |
@@ -73,11 +79,15 @@ The split is performed using `sklearn.model_selection.train_test_split` with `st
 
 ## 2.1 Overview
 
+![Overview](Infographics/Overview.png)
+
 The raw CSV contains both structured metadata fields (e.g. location, employment type) and free-
 text fields (e.g. description, requirements). A unified preprocessing pipeline converts these
 heterogeneous signals into a single token sequence suitable for a transformer encoder.
 
 ## 2.2 Steps
+
+![Data Steps](Infographics/DataSteps.png)
 
 ### Step 1 — Missing Value Handling
 - NaN / None values in text fields are replaced with empty strings.
@@ -118,6 +128,8 @@ heterogeneous signals into a single token sequence suitable for a transformer en
 
 # 3. Model Architecture
 
+![Architecture](Infographics/Archi.png)
+
 ## 3.1 Architecture Description
 
 The model is a **fully fine-tuned RoBERTa-base** transformer with a linear classification head. It follows the standard HuggingFace `AutoModelForSequenceClassification` pattern.
@@ -146,6 +158,8 @@ The model is a **fully fine-tuned RoBERTa-base** transformer with a linear class
 All parameters are **trainable** (full fine-tuning, no LoRA/adapter).
 
 ## 3.2 Data Flow Diagram
+
+![Data Flow Diagram](Infographics/DataFlow.png)
 
 ```
                     ┌─────────────────────────────┐
@@ -229,6 +243,8 @@ The processed data matches the RoBERTa model's expected input format exactly:
 
 # 5. Architecture Justification
 
+![Architecture Justification](Infographics/ArchiJusti.png)
+
 ## 5.1 Why a Transformer Encoder?
 
 Fraud detection in job postings is a semantically rich task. Fraudulent ads often contain subtle
@@ -291,6 +307,8 @@ Where `pₜ` is the predicted probability for the true class.
 ---
 
 # 6. End-to-End Pipeline Verification
+
+![End-to-End Pipeline Verification](Infographics/EndEndPipe.png)
 
 To verify that all pipeline components integrate correctly without requiring a full GPU training run,
 a lightweight demo script (pipeline_demo.ipynb) passes a 50-sample subset through the complete
