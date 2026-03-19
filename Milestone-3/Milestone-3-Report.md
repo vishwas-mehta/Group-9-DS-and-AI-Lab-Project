@@ -347,29 +347,6 @@ Model Output:
 }
 ```
 
-
-For each input, the model produces:
-
-```python
-{
-    "logits": tensor([2.31, -1.87]),   # Raw scores for [legit, fraud]
-    "probabilities": [0.985, 0.015],   # After softmax
-    "prediction": "LEGITIMATE",        # After thresholding
-    "threshold_used": 0.5
-}
-```
-
-For a fraudulent posting:
-
-```python
-{
-    "logits": tensor([-0.42, 1.73]),
-    "probabilities": [0.104, 0.896],
-    "prediction": "FRAUDULENT",
-    "threshold_used": 0.5
-}
-```
-
 ## 7.2 Loss Function — Focal Loss
 
 ```
