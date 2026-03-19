@@ -26,33 +26,77 @@
 The project follows a clean separation of raw data, processed artifacts, and model outputs:
 
 ```
-Q1/                                    ← Project Root
+Group-9-DS-and-AI-Lab-Project/             ← Repository Root
 │
-├── fake_job_postings.csv              ← Raw dataset (17,880 rows, 18 columns)
-│                                         Source: Kaggle shivamb/real-or-fake-fake-jobposting-prediction
+├── data/                                  ← 🗂️ All Datasets (git-ignored, see §1.1.1 below)
+│   └── raw/
+│       └── fake_job_postings.csv          ← Raw dataset (17,880 rows × 18 columns)
+│                                             Source: Kaggle — shivamb/real-or-fake-fake-jobposting-prediction
 │
-├── train.py                           ← Production training script
-├── eval.py                            ← Production evaluation script
-├── milestone3_pipeline.py             ← End-to-end pipeline verification (Milestone 3)
+├── models/                                ← 🗂️ Saved Model Artifacts (git-ignored, see §1.1.2 below)
+│   └── roberta-focal-best/                ← Best trained model checkpoint
+│       ├── config.json                    ← Model architecture config
+│       ├── model.safetensors              ← Trained weights (~500 MB)
+│       ├── tokenizer.json                 ← BPE tokenizer vocabulary
+│       ├── tokenizer_config.json          ← Tokenizer settings
+│       ├── special_tokens_map.json        ← Special token definitions
+│       ├── inference_config.json          ← Threshold, metrics, HP snapshot
+│       └── training_summary.json          ← Best epoch, final metrics summary
 │
-├── rule_discovery_ebm.ipynb           ← EBM-based interpretable rule discovery
-├── transformer_fraud_classifier_v3_1.ipynb  ← Full experimentation notebook
+├── src/                                   ← 🧠 Core Source Code
+│   ├── __init__.py
+│   ├── train.py                           ← Production training script
+│   ├── eval.py                            ← Production evaluation script
+│   ├── utils/                             ← Shared utility modules
+│   │   ├── __init__.py                    ← Public API exports
+│   │   ├── data.py                        ← Data loading, feature engineering, splits
+│   │   ├── focal_loss.py                  ← FocalLoss + FocalLossTrainer
+│   │   └── metrics.py                     ← Evaluation metrics, threshold sweep
+│   └── tools/                             ← Auxiliary detection tools
+│       ├── __init__.py
+│       └── metadata_detector/             ← Metadata-based anomaly detector
+│           ├── __init__.py
+│           ├── detector.py                ← MetadataDetector orchestrator
+│           ├── metadata_preprocessing.py  ← Feature engineering for metadata
+│           ├── anomaly_model.py           ← IsolationForest anomaly model
+│           └── rules_engine.py            ← Rule-based fraud signal scorer
 │
-├── Milestone 2.md                     ← Milestone 2 report
-├── Milestone 3.md                     ← This report
+├── notebook/                              ← 📓 Experimentation Notebooks
+│   ├── transformer_fraud_classifier_v3_1.ipynb  ← Full experimentation (EDA → Optuna → eval)
+│   └── rule_discovery_ebm.ipynb           ← EBM-based interpretable rule discovery
 │
-├── milestone3_output/                 ← Training checkpoints & logs (auto-created)
-│   ├── checkpoint-xxx/
-│   └── runs/
+├── webextension/                          ← 🌐 Chrome Extension — LinkedIn Job Predictor
+│   ├── manifest.json                      ← Extension manifest (MV3)
+│   ├── background.js                      ← Service worker (API calls)
+│   ├── content.js                         ← Page content extraction
+│   ├── content.css                        ← Injected page styles
+│   ├── popup.html                         ← Extension popup UI
+│   ├── popup.css                          ← Popup styling
+│   ├── popup.js                           ← Popup logic
+│   ├── icons/                             ← Extension icons
+│   │   ├── icon16.png
+│   │   ├── icon48.png
+│   │   └── icon128.png
+│   ├── lib/                               ← Bundled JS libraries
+│   │   ├── langchain-core.js
+│   │   └── pipeline.js
+│   ├── tools/                             ← Analysis tools for extension
+│   │   ├── job-analyzer-tool.js
+│   │   ├── link-detector.js
+│   │   ├── link-scraper.js
+│   │   └── text-extractor.js
+│   ├── .gitignore
+│   ├── README.md
+│   ├── SETUP.md
+│   ├── ARCHITECTURE.md
+│   └── CHAIN_DOCS.md
 │
-└── fraud_detector_final/              ← Saved model artifacts (from train.py)
-    ├── config.json
-    ├── model.safetensors
-    ├── tokenizer.json
-    ├── tokenizer_config.json
-    ├── special_tokens_map.json
-    ├── inference_config.json           ← Threshold, metrics, HP snapshot
-    └── training_summary.json
+├── AgenticWork/                           ← 🤖 LLM-Powered Job Parser Agent
+│   ├── job_parser_agent.py                ← Extracts 18 structured features from job docs
+│   ├── example.py                         ← Usage example
+│   ├── job1.pdf                           ← Sample job posting (PDF)
+│   ├── requirements.txt                   ← Agent-specific dependencies
+│   └── README.md
 ```
 
 ## 1.2 Data Splits
