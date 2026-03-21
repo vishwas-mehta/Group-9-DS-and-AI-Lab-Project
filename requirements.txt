@@ -11,3 +11,8 @@ accelerate>=0.27.0
 lightgbm
 shap
 interpret
+python-whois
+python-dotenv
+google-search-results
+
+
