@@ -1,0 +1,117 @@
+Job Analyzer Tool Evidence
+==========================
+Generated At: 2026-04-02T17:36:39.831525
+Input File: job1.pdf
+
+tool_company_registry
+=====================
+{
+  "ok": false,
+  "error": "Soon We will implement Coming Soon"
+}
+
+tool_scam_signals
+=================
+{
+  "ok": true,
+  "data": {
+    "scam_score": 30,
+    "risk_level": "medium",
+    "signals_found": 1,
+    "is_clean": false,
+    "matched_signals": {
+      "asks_for_money": {
+        "description": "Job asks applicant to pay money upfront",
+        "matched_keywords": [
+          "registration fee"
+        ],
+        "weight": 30
+      }
+    }
+  }
+}
+
+tool_website_verify
+===================
+{
+  "ok": false,
+  "error": "website not found in posting"
+}
+
+tool_website_content
+====================
+{
+  "ok": false,
+  "error": "website not found in posting"
+}
+
+tool_company_news
+=================
+{
+  "ok": false,
+  "error": "company_name could not be inferred"
+}
+
+tool_company_web_search
+=======================
+{
+  "ok": false,
+  "error": "company_name could not be inferred"
+}
+
+tool_company_wikipedia
+======================
+{
+  "ok": false,
+  "error": "company_name could not be inferred"
+}
+
+tool_domain_reputation
+======================
+{
+  "ok": false,
+  "error": "domain/email/website not available"
+}
+
+tool_email_verify
+=================
+{
+  "ok": false,
+  "error": "email not found in posting"
+}
+
+tool_job_boards
+===============
+{
+  "ok": false,
+  "error": "title and company_name are required"
+}
+
+tool_phone_check
+================
+{
+  "ok": true,
+  "data": {
+    "input": "8072891550",
+    "e164": "+918072891550",
+    "international": "+91 80728 91550",
+    "national": "080728 91550",
+    "is_possible": true,
+    "is_valid": true,
+    "country_code": 91,
+    "region_code": "IN",
+    "number_type": "2",
+    "carrier": "Reliance Jio",
+    "location": "Bangalore, Karnataka",
+    "timezones": [
+      "Asia/Calcutta"
+    ]
+  }
+}
+
+tool_social_profiles
+====================
+{
+  "ok": false,
+  "error": "company_name could not be inferred"
+}

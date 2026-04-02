@@ -11,9 +11,6 @@ import sys
 from job_parser_agent import JobPosting, parse_job_posting
 
 
-
-
-
 def main(file_path: str) -> None:
     print(f"Extracting features from: {file_path}\n")
 

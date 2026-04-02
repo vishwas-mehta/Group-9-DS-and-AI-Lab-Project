@@ -1,0 +1,49 @@
+Job Analyzer Summary
+====================
+Generated At: 2026-04-02T17:36:39.831290
+Input File: job1.pdf
+
+Extracted Core Fields
+---------------------
+Title: Medical Coder
+Location: Chennai, Coimbatore, Vellore, Trichy, Cuddalore, Pondi, Salem, Erode, Namakkal, Thanjavur, Nagercoil, Theni, Dindokal, Thiruvannamalai, Villupuram, Karur, Tirunelveli, Kanniyakumari, Tirupati, Kerala, AP, Tamilnadu, Telangana
+Company Name: None
+Email: None
+Website: None
+Phone: 8072891550
+
+Parsed Job Object
+-----------------
+{
+  "title": "Medical Coder",
+  "description": "Medical Coding is the process of converting patient health information into alpha numeric codes.",
+  "requirements": "All (UG/PG) Life Science& Paramedical Graduates\n\u2022 BDS BPT BHMS BAMS\n\u2022 Siddha,Unani,Naturopathy\n\u2022 {Dip Bsc Msc} Nursing/GNM\n\u2022 {B.E M.E} Biomedical Engineering\n\u2022 {B.tech,M.tech}Biotechnology\n\u2022 Biochemistry\n\u2022 Bioinformatics\n\u2022 Microbiology\n\u2022 Zoology and Advanced zoology\n\u2022 Biology\n\u2022 Botany\n\u2022 Medical Lab Tech\n\u2022 Plant biotechnology\n\u2022 Pharmacy(B.Pharm M.pharm)\n\u2022 Paramedical\n\u2022 Physiotherapy\n\u2022 Physician assistant\n\u2022 Critical Care Technology\n\u2022 Medical Biochemistry\n\u2022 Medical Record Science\n\u2022 Operation Theatre & Anaesthesia Technology\n\u2022 {Bsc Msc Dip}\n\u2022 Clinical Nutrition\n\u2022 Human Genetics\n\u2022 Medical Laboratory Technology\n\u2022 Medical Sociology\n\u2022 Epidemiology",
+  "company_profile": "Achievers Spot is a leader in providing Medical Coding training and placement services in Chennai. We are counted as building a platform where people can come and explore exciting and lucrative careers. We have a team of dedicated Trainers and consultants with hands-on experience in healthcare field.",
+  "benefits": "\u2022 System based job with (work from home option)\n\u2022 Weekly 5 days duty\n\u2022 Day shift with Sat and Sun off\n\u2022 Food and Cab provided by company\n\u2022 Incentives based on performance\n\u2022 Starting salary 12k to 25k with increment in 6 months for experienced.\n\u2022 Abroad opportunities available\n\u2022 Bonus for referring friends\n\u2022 Medical expenses covered by company\n\u2022 Provident Fund will be provided\n\u2022 Gratuity after 5 yrs of work experience.",
+  "location": "Chennai, Coimbatore, Vellore, Trichy, Cuddalore, Pondi, Salem, Erode, Namakkal, Thanjavur, Nagercoil, Theni, Dindokal, Thiruvannamalai, Villupuram, Karur, Tirunelveli, Kanniyakumari, Tirupati, Kerala, AP, Tamilnadu, Telangana",
+  "department": "Healthcare & Life Sciences",
+  "salary_range": "12k-25k",
+  "employment_type": "Full-time",
+  "required_experience": "Not Applicable",
+  "required_education": "Unspecified",
+  "industry": "Medical Devices & Equipment",
+  "function": "Healthcare & Life Sciences - Other",
+  "has_company_logo": null,
+  "telecommuting": 1,
+  "has_questions": null
+}
+
+Tool Execution Status
+---------------------
+- tool_company_registry: failed
+- tool_scam_signals: ok
+- tool_website_verify: failed
+- tool_website_content: failed
+- tool_company_news: failed
+- tool_company_web_search: failed
+- tool_company_wikipedia: failed
+- tool_domain_reputation: failed
+- tool_email_verify: failed
+- tool_job_boards: failed
+- tool_phone_check: ok
+- tool_social_profiles: failed

@@ -1,0 +1,367 @@
+Job Analyzer Tool Evidence
+==========================
+Generated At: 2026-04-02T17:44:30.206872
+Input File: job1.pdf
+
+tool_company_registry
+=====================
+{
+  "ok": false,
+  "error": "Soon We will implement Coming Soon"
+}
+
+tool_scam_signals
+=================
+{
+  "ok": true,
+  "data": {
+    "scam_score": 30,
+    "risk_level": "medium",
+    "signals_found": 1,
+    "is_clean": false,
+    "matched_signals": {
+      "asks_for_money": {
+        "description": "Job asks applicant to pay money upfront",
+        "matched_keywords": [
+          "registration fee"
+        ],
+        "weight": 30
+      }
+    }
+  }
+}
+
+tool_website_verify
+===================
+{
+  "ok": true,
+  "data": {
+    "input_url": "https://achieversspot.com",
+    "final_url": "https://achieversspot.com/",
+    "status_code": 200,
+    "is_live": true,
+    "ssl_valid": true,
+    "redirect_count": 0,
+    "redirect_chain": [],
+    "response_time_ms": 1164,
+    "server": "Apache",
+    "content_type": "text/html"
+  }
+}
+
+tool_website_content
+====================
+{
+  "ok": true,
+  "data": {
+    "url": "https://achieversspot.com",
+    "extracted_text": "A trusted record of training and placements.\nI recently completed my ACMC course at achiever's spot. And i had a great learning expirence. Thank you Shruthi Prakash mam for your guidance and explaining each and every point and responding to the messages and clearing the doubt even after the class.\nIt is really a nice coaching centre.guide very well,all the staffs are friendly. Especially Shruthi mam teach very clear and clarify doubt immediately and guide me very well to clear my cpc exam with 90%. thank you all for your support.\nI was completed online cpc training in March 2025 batch, now i scored with 89%. Thank you for achievers spot esp my trainer Shruthi prakash training is very comfortable and has helped me lot whenever I asked doubt she cleared at a time always.\nCelebration is in the air at Achievers Spot as we congratulate one of our own, Boopathy D., on his remarkable achievement. With a stellar 81% in the CPC Exam, Boopathy has not only secured his certification as a professional coder but has also landed a promising position at Omega Healthcare.\nI have cleared my CPC Exam with 88% while working with Miramed Ajuba..Achievers Spot is one of the best institute for CPC Preparation..The excellent way of training is very helpful for me to clear CPC Exam ..Tq Gopi Sir,Shruthi Mam,Prem Sir and i placed on Miramed Ajuba.\nI was completed online cpc training in March 2025 batch, now i scored with 89%. Thank you for achievers spot esp my trainer Shruthi prakash training is very comfortable and has helped me lot whenever I asked doubt she cleared at a time always.\nExcellent study materials and Awesome Training Sessions. Enough Mock Tests conducted .One word Finally Awesome & Perfect everything to become CPC Certified Coder..!!\nFirst of all i searched the Best CPC training institute in online and then i reached Achievers Spot is the best Institute in Chennai. The way of teaching is very nice and very easy to pick up.This Institute is An ISO 9001:2008 Certified Institute & the quality is really standard as per ISO 9001:2008.I got 89% percent in CPC examination.\nI enquired about CPC training in Achievers Spot.I m very much satisfied and Joined in Achievers Spot.Before coming I was fresher in Medical Coding.Now i m strong in Anatomy,Physiology,Pathology,ICD,CPT.I scored 89% in CPC.This Institute is An ISO 9001:2008 Certified Institute & the quality is really standard as per ISO 9001:2008.All Trainers are well Experienced With Excellent Communication Skill & deep knowledge in Medical Coding.\nCPC Exam Training provided is very useful and all our Batch mates passed the CPC Exam with good grades.\nExcellent study materials and Awesome Training Sessions. Enough Mock Tests conducted .One word Finally Awesome & Perfect everything to become CPC Certified Coder..!!\nI would say Achievers Spot is the best institute for Medical Coding Certification Training. They have more than 8 years of experience in Medical Coding Industry.I have completed my CPC training from Achievers Spot and scored 86% in the exam in first attempt. Excellent coaching and practice exams helped me clear my CPC with a good percentage. I would surely recommend Achievers Spot for CPC certification Training.\nAchievers Spot is Excellent for both fresher's & experienced who are going to take CPC or any certification course. They will provide study materials and practice test papers . My sincere suggestion to prefer Achievers Spot for CPC Certification exam. This Institute is An ISO 9001:2008 Certified Institute & the quality is really standard as per ISO 9001:2008. They conduct Mock test too.I Cleared my Exam in 1st Attempt with 88 Percentage.\nHi everyone. I was a student of Achievers Spot .I got trained for CPC. I took the exam recently. I passed the CPC exam with a good score. Training is extra ordinary and highly professional. strategy is very good. I`m fortunate enough to be a student of Mr.Gopinath Sharma. Guidance is marvelous. As Medical Coding is a skilled job, professional training is must. The best institute in INDIA with highly skilled and experienced faculty.\nI joined Achievers Spot solutions in 2014 as a Fresher. Excellent Training Institute for Medical coding. I got placed in Ajuba. I joined CPC training in 2017.I cleared the exam with 87% of marks.The Best Training Institute for CPC Training in Chennai with experienced CPC Certified Trainers.\nI was referred to Achievers Spot by my friend for CPC exam training and I am really happy with the way training was handled and the exam related points were precisely discussed. This Institute is An ISO 9001:2008 Certified Institute & the quality is really standard as per ISO 9001:2008..I thank my friend for referring me to such a good institute.\nExcellent teaching and they have high level of Patience,very calm and respectful. Mr.Gopinath -he is such a wonderful person I have ever met ,very responsible and he knows how to teach without boredom. This Institute is An ISO 9001:2008 Certified Institute & the quality is really standard as per ISO 9001:2008\nCPC Exam Training provided is excellent and really useful not only for exam purpose but also to learn more about overall Medical Coding concepts which also enhanced my skills at work. My Experience at Achievers Spot was good. Trainers are knowledgeable and training was excellent. Infrastructure is good. They have more than 8 years of experience in Medical Coding Industry.\nNew Batch starts from 02nd,04th,06th,09th,09th,11th,13th,16th,18th,20th,23rd,25th,27th,30th MARCH 2026,2nd,01st,03rd,06th,08th,10th,13th,15th,17th,20th,22nd,24th,27th,29th APRIL 2026.",
+    "word_count": 906,
+    "metadata": {
+      "title": "Achievers Spot \u2013 Medical Coding Training & CPC Certification",
+      "description": "Job-oriented medical coding course with CPC exam preparation, internship support, and placement assistance across top healthcare companies.",
+      "author": "Achievers Spot",
+      "sitename": "achieversspot.com",
+      "date": "2026-03-30",
+      "language": null,
+      "categories": [],
+      "tags": [
+        "medical coding training, CPC certification course, ICD-10 training, medical billing course, healthcare coding jobs, medical coding institute in India, Achievers Spot"
+      ]
+    }
+  }
+}
+
+tool_company_news
+=================
+{
+  "ok": false,
+  "error": "No results found.",
+  "data": {
+    "company_name": "Achievers Spot"
+  }
+}
+
+tool_company_web_search
+=======================
+{
+  "ok": true,
+  "data": {
+    "company_name": "Achievers Spot",
+    "searches": {
+      "general_info": [
+        {
+          "title": "Working atAchieversSpot: Culture, Careers, Benefits, Jobs and more",
+          "url": "https://www.ambitionbox.com/overview/achievers-spot-overview",
+          "snippet": "AboutAchieversSpot.Foundedin2010 (15 yrs old). India Employee Count201-500.AchieversSpotwasfoundedin 2010. Thecompanyhas been operating for 15 years primarily in the Education & Training sector. Where is theAchieversSpotheadquarterslocated?"
+        },
+        {
+          "title": "AchieversSpot| LinkedIn",
+          "url": "https://in.linkedin.com/company/achievers-spot",
+          "snippet": "External link forAchieversSpot. Industry. Hospitals and Health Care.Companysize. 11-50 employees.Headquarters. Chennai, 600017. Type. Partnership.Founded."
+        },
+        {
+          "title": "AchieversSpot\u2013 Medical Coding Training in Chennai",
+          "url": "https://achieversspot.com/",
+          "snippet": "AchieversSpotOffers Comprehensive Medical Coding and Billing Training covering Medical Terminology, ICD-10 CM, CPT-4 and Specialty training in Radiology, Surgery, Evaluation & Management, Anesthesia and Pathology coding required for US healthcare BPO."
+        },
+        {
+          "title": "AchieversSpotReview, Certification feedback... | Shiksha Online",
+          "url": "https://www.shiksha.com/provider/achievers-spot-226125",
+          "snippet": "AchieversSpotAboutAchieversSpot. Why ChooseAchieversSpotCourses? Pros and Cons ofAchieversSpot.AchieversSpothas placed over 4,000 candidates in more than 50 leading healthcarecompaniesto date."
+        }
+      ],
+      "employee_review": [
+        {
+          "title": "Achievers Spot \"Work Culture\" Reviews - AmbitionBoxWorking at Achievers Spot | GlassdoorAchievers Spot Reviews - GlassdoorWhat is Achievers Spot? Company Culture, Mission, ValuesAchievers Spot Reviews: What Is It Like to Work At Achievers ...Achievers Spot Reviews by 80+ Employees | Rated 4.7/5 ...Achievers Spot Reviews - AmbitionBox",
+          "url": "https://www.ambitionbox.com/reviews/achievers-spot-work-culture-reviews-616800",
+          "snippet": "Sep 5, 2020 \u00b7WorkcultureatAchieversSpotis rated 4.5 out of 5 by 9 employees on AmbitionBox, indicating a generally positive environment.Workcultureencompasses aspects like collaboration, support, and overall employee satisfaction.See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot.Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot.Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.WorkcultureatAchieversSpotis rated 4.5 out of 5 by 88 employees on AmbitionBox, indicating a generally positive environment.Workcultureencompasses aspects like collaboration, support, and overall employee satisfaction.May 27, 2020 \u00b7AchieversSpotis rated 4.6 out of 5 stars on AmbitionBox, based on 3companyreviews. This rating reflects a generally positiveemployeeexperience, indicating satisfaction with the company\u2019sworkculture, benefits, and career growth opportunities."
+        },
+        {
+          "title": "Working at Achievers Spot | GlassdoorAchievers Spot Reviews - GlassdoorWhat is Achievers Spot? Company Culture, Mission, ValuesAchievers Spot Reviews: What Is It Like to Work At Achievers ...Achievers Spot Reviews by 80+ Employees | Rated 4.7/5 ...Achievers Spot Reviews - AmbitionBox",
+          "url": "https://www.glassdoor.com/Overview/Working-at-Achievers-Spot-EI_IE5762056.11,25.htm",
+          "snippet": "See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot.Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot.Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.WorkcultureatAchieversSpotis rated 4.5 out of 5 by 88 employees on AmbitionBox, indicating a generally positive environment.Workcultureencompasses aspects like collaboration, support, and overall employee satisfaction.May 27, 2020 \u00b7AchieversSpotis rated 4.6 out of 5 stars on AmbitionBox, based on 3companyreviews. This rating reflects a generally positiveemployeeexperience, indicating satisfaction with the company\u2019sworkculture, benefits, and career growth opportunities."
+        },
+        {
+          "title": "Achievers Spot Reviews - GlassdoorWhat is Achievers Spot? Company Culture, Mission, ValuesAchievers Spot Reviews: What Is It Like to Work At Achievers ...Achievers Spot Reviews by 80+ Employees | Rated 4.7/5 ...Achievers Spot Reviews - AmbitionBox",
+          "url": "https://www.glassdoor.co.in/Reviews/Achievers-Spot-Reviews-E5762056.htm",
+          "snippet": "Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot.Glassdoor has 2AchieversSpotreviewssubmitted anonymously byAchieversSpotemployees. Reademployeereviewsand ratings on Glassdoor to decide ifAchieversSpotis right for you.WorkcultureatAchieversSpotis rated 4.5 out of 5 by 88 employees on AmbitionBox, indicating a generally positive environment.Workcultureencompasses aspects like collaboration, support, and overall employee satisfaction.May 27, 2020 \u00b7AchieversSpotis rated 4.6 out of 5 stars on AmbitionBox, based on 3companyreviews. This rating reflects a generally positiveemployeeexperience, indicating satisfaction with the company\u2019sworkculture, benefits, and career growth opportunities."
+        },
+        {
+          "title": "What is Achievers Spot? Company Culture, Mission, Values",
+          "url": "https://www.glassdoor.ca/Overview/Working-at-Achievers-Spot-EI_IE5762056.11,25.htm",
+          "snippet": "See whatemployeessay it's like to work atAchieversSpot. Salaries,reviews, and more - all posted byemployeesworking atAchieversSpot."
+        }
+      ],
+      "scam_fraud": [
+        {
+          "title": "",
+          "url": "",
+          "snippet": ""
+        }
+      ],
+      "glassdoor": [
+        {
+          "title": "Working at Achievers Spot - GlassdoorAchievers Spot Reviews: What Is It Like to Work At Achievers ...Achievers Spot Reviews in R\u0101man\u0101thapuram | GlassdoorAchievers Spot interview questions - GlassdoorAchievers Spot - Great | GlassdoorAchievers Spot Questions & Answers | GlassdoorAchievers Spot: Employee Benefits and Perks | Glassdoor",
+          "url": "https://www.glassdoor.com/Overview/Working-at-Achievers-Spot-EI_IE5762056.11,25.htm",
+          "snippet": "Glassdoorgives you an inside look at what it's like to work atAchieversSpot, including salaries, reviews, office photos, and more. This is theAchieversSpotcompany profile.Nov 26, 2022 \u00b7Glassdoorhas 2AchieversSpotreviews submitted anonymously byAchieversSpotemployees. Read employee reviews and ratings onGlassdoorto decide ifAchieversSpotis right for you.Glassdoorhas 2AchieversSpotreviews submitted anonymously byAchieversSpotemployees. Read employee reviews and ratings onGlassdoorto decide ifAchieversSpotis right for you.AchieversSpotinterview details: 2 interview questions and 2 interview reviews posted anonymously byAchieversSpotinterview candidates.Discover more reviews aboutAchieversSpot. See reviews by: Popularity | Rating | Date | AllHave questions about working atAchieversSpot? Read answers to frequently asked questions to help you make a choice before applying to a job or accepting a job offer.AchieversSpotbenefits and perks, including insurance benefits, retirement benefits, and vacation policy. Reported anonymously byAchieversSpotemployees."
+        },
+        {
+          "title": "Achievers Spot Reviews: What Is It Like to Work At Achievers ...Achievers Spot Reviews in R\u0101man\u0101thapuram | GlassdoorAchievers Spot interview questions - GlassdoorAchievers Spot - Great | GlassdoorAchievers Spot Questions & Answers | GlassdoorAchievers Spot: Employee Benefits and Perks | Glassdoor",
+          "url": "https://www.glassdoor.com/Reviews/Achievers-Spot-Reviews-E5762056.htm",
+          "snippet": "Nov 26, 2022 \u00b7Glassdoorhas 2AchieversSpotreviews submitted anonymously byAchieversSpotemployees. Read employee reviews and ratings onGlassdoorto decide ifAchieversSpotis right for you.Glassdoorhas 2AchieversSpotreviews submitted anonymously byAchieversSpotemployees. Read employee reviews and ratings onGlassdoorto decide ifAchieversSpotis right for you.AchieversSpotinterview details: 2 interview questions and 2 interview reviews posted anonymously byAchieversSpotinterview candidates.Discover more reviews aboutAchieversSpot. See reviews by: Popularity | Rating | Date | AllHave questions about working atAchieversSpot? Read answers to frequently asked questions to help you make a choice before applying to a job or accepting a job offer.AchieversSpotbenefits and perks, including insurance benefits, retirement benefits, and vacation policy. Reported anonymously byAchieversSpotemployees."
+        },
+        {
+          "title": "Achievers Spot Reviews in R\u0101man\u0101thapuram | Glassdoor",
+          "url": "https://www.glassdoor.com/Reviews/Achievers-Spot-R\u0101man\u0101thapuram-Reviews-EI_IE5762056.0,14_IL.15,29_IC2830932.htm",
+          "snippet": "Glassdoorhas 2AchieversSpotreviews submitted anonymously byAchieversSpotemployees. Read employee reviews and ratings onGlassdoorto decide ifAchieversSpotis right for you."
+        },
+        {
+          "title": "Achievers Spot interview questions - Glassdoor",
+          "url": "https://www.glassdoor.com/Interview/Achievers-Spot-Interview-Questions-E5762056.htm",
+          "snippet": "AchieversSpotinterview details: 2 interview questions and 2 interview reviews posted anonymously byAchieversSpotinterview candidates."
+        }
+      ],
+      "linkedin_page": [
+        {
+          "title": "Achievers Spot | LinkedIn",
+          "url": "https://in.linkedin.com/company/achievers-spot",
+          "snippet": "Achievers Spotis a leader in providing Medical Coding training and placement services in Chennai. We are counted as building a platform where people can come and explore exciting and lucrative careers. We have team of dedicated Trainers and consultants with hands-on experience in healthcare field.Achievers Spotis a well-established Training, Placement and Certification center providing ..."
+        },
+        {
+          "title": "Max Healthcare & Cancer Research Intl Pvt Ltd | LinkedIn",
+          "url": "https://in.linkedin.com/company/max-healthcare-&-cancer-research-intl-pvt-ltd",
+          "snippet": "AchieversSpot. Hospitals and Health Care. Chennai, Tamil Nadu."
+        },
+        {
+          "title": "Olive Ecopak Private Limited | LinkedIn",
+          "url": "https://www.linkedin.com/company/oliveecopak-pvt-ltd",
+          "snippet": "Personal Care Services. Ahmedabad, Gujarat.AchieversSpot. Hospitals and Health Care."
+        },
+        {
+          "title": "VAAGAI Academy of Mathematics | LinkedIn",
+          "url": "https://in.linkedin.com/company/vaagai-academy-of-mathematics",
+          "snippet": "AchieversSpot. Hospitals and Health Care. Chennai, 600017."
+        }
+      ]
+    }
+  }
+}
+
+tool_company_wikipedia
+======================
+{
+  "ok": false,
+  "error": "Not found on Wikipedia"
+}
+
+tool_domain_reputation
+======================
+{
+  "ok": true,
+  "data": {
+    "domain": "achieversspot.com",
+    "registrar": "GoDaddy.com, LLC",
+    "creation_date": "2011-02-25T12:30:25+00:00",
+    "expiration_date": "2027-02-25T12:30:25+00:00",
+    "updated_date": "2026-03-03T11:12:45+00:00",
+    "domain_age_days": 5514,
+    "is_live": true,
+    "live_url": "https://achieversspot.com/",
+    "risk_level": "low"
+  }
+}
+
+tool_email_verify
+=================
+{
+  "ok": false,
+  "error": "email not found in posting"
+}
+
+tool_job_boards
+===============
+{
+  "ok": true,
+  "data": {
+    "job_title": "Medical Coder",
+    "company_name": "Achievers Spot",
+    "location": "Chennai, Coimbatore, Vellore, Trichy, Cuddalore, Pondi, Salem, Erode, Namakkal, Thanjavur, Nagercoil, Theni, Dindokal, Thiruvannamalai, Villupuram, Karur, Tirunelveli, Kanniyakumari, Tirupati, Kerala, AP, Tamilnadu, Telangana",
+    "boards_found": 2,
+    "verdict": "moderate_presence",
+    "boards": {
+      "linkedin_jobs": {
+        "found": false,
+        "results": [],
+        "error": "ConnectError: ConnectError('error sending request for url (https://yandex.com/search/site/?text=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Alinkedin.com%2Fjobs&web=1&searchid=7667954)', 'https://yandex.com/search/site/?text=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Alinkedin.com%2Fjobs&web=1&searchid=7667954')"
+      },
+      "indeed": {
+        "found": true,
+        "results": [
+          {
+            "title": "",
+            "url": "",
+            "snippet": ""
+          }
+        ]
+      },
+      "glassdoor": {
+        "found": false,
+        "results": [],
+        "error": "ConnectError: ConnectError('error sending request for url (https://search.yahoo.com/search;_ylt=gZSDPA9FL4ewWUn_CnDPR7xy;_ylu=CoIihejxmSpuNk2g_e08l0_Aj-VTfGZB6JPyY4pA_1abSoo?p=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Aglassdoor.com)', 'https://search.yahoo.com/search;_ylt=gZSDPA9FL4ewWUn_CnDPR7xy;_ylu=CoIihejxmSpuNk2g_e08l0_Aj-VTfGZB6JPyY4pA_1abSoo?p=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Aglassdoor.com')"
+      },
+      "naukri": {
+        "found": false,
+        "results": [],
+        "error": "ConnectError: ConnectError('error sending request for url (https://search.brave.com/search?q=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Anaukri.com&source=web)', 'https://search.brave.com/search?q=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Anaukri.com&source=web')"
+      },
+      "foundit": {
+        "found": true,
+        "results": [
+          {
+            "title": "MedicalCoding JOBS FOR X-Ray Technology, MLT,MedicalImaging...",
+            "url": "https://www.foundit.in/job/medical-coding-jobs-for-x-ray-technology-mlt-medical-imaging-tech-grad-as-medical-coding-technologies-thoothukudi-29871518",
+            "snippet": "Position:MedicalCoder. Ct: HR DEEPA - 7305649640. Medical Coding is the process of converting patient health information into alpha numeric codes."
+          },
+          {
+            "title": "MedicalCoding-Wanted Msc, Bsc Nursing& Midwifery, Dgnm, gnm...",
+            "url": "https://www.foundit.in/job/medical-coding-wanted-msc-bsc-nursing-midwifery-dgnm-gnm-staff-nurse-as-medical-coding-technologies-coimbatore-30907557",
+            "snippet": "Coimbatore,Chennai.Position:MedicalCoder. Ct: HR Kiruhika. Ct No: 7358425167. Medical Coding is the process of converting patient health information into alpha numeric codes."
+          }
+        ]
+      },
+      "wellfound": {
+        "found": false,
+        "results": [],
+        "error": "No results found."
+      },
+      "shine": {
+        "found": false,
+        "results": [],
+        "error": "ConnectError: ConnectError('error sending request for url (https://search.brave.com/search?q=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Ashine.com&source=web)', 'https://search.brave.com/search?q=%22Medical+Coder%22+%22Achievers+Spot%22+%22Chennai%2C+Coimbatore%2C+Vellore%2C+Trichy%2C+Cuddalore%2C+Pondi%2C+Salem%2C+Erode%2C+Namakkal%2C+Thanjavur%2C+Nagercoil%2C+Theni%2C+Dindokal%2C+Thiruvannamalai%2C+Villupuram%2C+Karur%2C+Tirunelveli%2C+Kanniyakumari%2C+Tirupati%2C+Kerala%2C+AP%2C+Tamilnadu%2C+Telangana%22+site%3Ashine.com&source=web')"
+      },
+      "instahyre": {
+        "found": false,
+        "results": [],
+        "error": "No results found."
+      }
+    }
+  }
+}
+
+tool_phone_check
+================
+{
+  "ok": true,
+  "data": {
+    "input": "8072891550",
+    "e164": "+918072891550",
+    "international": "+91 80728 91550",
+    "national": "080728 91550",
+    "is_possible": true,
+    "is_valid": true,
+    "country_code": 91,
+    "region_code": "IN",
+    "number_type": "2",
+    "carrier": "Reliance Jio",
+    "location": "Bangalore, Karnataka",
+    "timezones": [
+      "Asia/Calcutta"
+    ]
+  }
+}
+
+tool_social_profiles
+====================
+{
+  "ok": true,
+  "data": {
+    "company_name": "Achievers Spot",
+    "platforms_found": 1,
+    "profiles": {
+      "linkedin": {
+        "found": false,
+        "links": [],
+        "error": "No results found."
+      },
+      "twitter_x": {
+        "found": false,
+        "links": [],
+        "error": "No results found."
+      },
+      "github": {
+        "found": false,
+        "links": [],
+        "error": "No results found."
+      },
+      "facebook": {
+        "found": false,
+        "links": [],
+        "error": "ConnectError: ConnectError('error sending request for url (https://www.google.com/search?q=%22Achievers+Spot%22+site%3Afacebook.com&filter=1&start=0&hl=en-US&lr=lang_en&cr=countryUS)', 'https://www.google.com/search?q=%22Achievers+Spot%22+site%3Afacebook.com&filter=1&start=0&hl=en-US&lr=lang_en&cr=countryUS')"
+      },
+      "instagram": {
+        "found": false,
+        "links": [],
+        "error": "No results found."
+      },
+      "youtube": {
+        "found": true,
+        "links": [
+          "https://www.youtube.com/channel/UCKwwrtAsdrb4uhaN3JS3pVg",
+          "https://www.youtube.com/watch?v=BN-pLkeXZi0",
+          "https://www.youtube.com/watch?v=6neqG3zB-LI"
+        ],
+        "snippets": [
+          "AchieversSpot. @Achieversspot2910. \u2022 147 subscribers \u2022 66 videos.",
+          "",
+          ""
+        ]
+      },
+      "glassdoor": {
+        "found": false,
+        "links": [],
+        "error": "No results found."
+      }
+    }
+  }
+}

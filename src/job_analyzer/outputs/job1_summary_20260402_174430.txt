@@ -1,0 +1,53 @@
+Job Analyzer Summary
+====================
+Generated At: 2026-04-02T17:44:30.206662
+Input File: job1.pdf
+
+Extracted Core Fields
+---------------------
+Title: Medical Coder
+Location: Chennai, Coimbatore, Vellore, Trichy, Cuddalore, Pondi, Salem, Erode, Namakkal, Thanjavur, Nagercoil, Theni, Dindokal, Thiruvannamalai, Villupuram, Karur, Tirunelveli, Kanniyakumari, Tirupati, Kerala, AP, Tamilnadu, Telangana
+Company Name: Achievers Spot
+Email: None
+Website: https://achieversspot.com
+Phone: 8072891550
+
+Parsed Job Object
+-----------------
+{
+  "title": "Medical Coder",
+  "description": "Medical Coding is the process of converting patient health information into alpha numeric codes.",
+  "requirements": "Knowledge in Anatomy and Physiology; Good communication and interpersonal skills; Basic Computer Skills.",
+  "company_profile": "Achievers Spot is a leader in providing Medical Coding training and placement services in Chennai. We are counted as building a platform where people can come and explore exciting and lucrative careers. We have team of dedicated Trainers and consultants with hands-on experience in healthcare field.",
+  "company_name": "Achievers Spot",
+  "company_website": "https://achieversspot.com",
+  "contact_email": null,
+  "contact_phone": "8072891550",
+  "benefits": "System based job with (work from home option); Weekly 5 days duty; Day shift with Sat and Sun off; Food and Cab provided by company; Incentives based on performance; Starting salary 12k to 25k with increment in 6 months for experienced; Abroad opportunities available; Bonus for referring friends; Medical expenses covered by company; Provident Fund; Gratuity after 5 years of work.",
+  "location": "Chennai, Coimbatore, Vellore, Trichy, Cuddalore, Pondi, Salem, Erode, Namakkal, Thanjavur, Nagercoil, Theni, Dindokal, Thiruvannamalai, Villupuram, Karur, Tirunelveli, Kanniyakumari, Tirupati, Kerala, AP, Tamilnadu, Telangana",
+  "department": "Healthcare & Life Sciences",
+  "salary_range": "12k to 25k",
+  "employment_type": "Full-time",
+  "required_experience": "Not Applicable",
+  "required_education": "Unspecified",
+  "industry": "Medical Devices & Equipment",
+  "function": "Healthcare & Life Sciences - Other",
+  "has_company_logo": null,
+  "telecommuting": 1,
+  "has_questions": null
+}
+
+Tool Execution Status
+---------------------
+- tool_company_registry: failed
+- tool_scam_signals: ok
+- tool_website_verify: ok
+- tool_website_content: ok
+- tool_company_news: failed
+- tool_company_web_search: ok
+- tool_company_wikipedia: failed
+- tool_domain_reputation: ok
+- tool_email_verify: failed
+- tool_job_boards: ok
+- tool_phone_check: ok
+- tool_social_profiles: ok
