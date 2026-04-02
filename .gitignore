@@ -11,7 +11,7 @@ data/
 
 # Test probabilities
 *.npy
-
+.vscode/
 # Checkpoints
 checkpoints/
 .ipynb_checkpoints
