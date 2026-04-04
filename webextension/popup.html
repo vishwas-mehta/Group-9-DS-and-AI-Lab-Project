@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LinkedIn Job Predictor</title>
   <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
   <div class="popup-container">
     <div class="popup-header">
@@ -24,14 +26,8 @@
     <div class="popup-section">
       <label for="api-key" class="popup-label">Gemini API Key</label>
       <div class="input-group">
-        <input
-          type="password"
-          id="api-key"
-          class="popup-input"
-          placeholder="Enter your Gemini API key"
-          spellcheck="false"
-          autocomplete="off"
-        />
+        <input type="password" id="api-key" class="popup-input" placeholder="Enter your Gemini API key"
+          spellcheck="false" autocomplete="off" />
         <button class="toggle-visibility" id="toggle-key" title="Show/Hide Key">👁️</button>
       </div>
       <button class="popup-btn" id="save-btn">
@@ -52,4 +48,5 @@
 
   <script src="popup.js"></script>
 </body>
+
 </html>

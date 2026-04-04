@@ -25,157 +25,7 @@
     }
 
     // ── Scrape Job Data ──────────────────────────────────────
-    function scrapeJobData() {
-        const data = {};
-
-        // Job Title — try multiple selectors (LinkedIn A/B tests class names)
-        data.title =
-            getTextContent(".job-details-jobs-unified-top-card__job-title h1") ||
-            getTextContent(".job-details-jobs-unified-top-card__job-title") ||
-            getTextContent(".jobs-unified-top-card__job-title") ||
-            getTextContent(".t-24.t-bold.inline") ||
-            getTextContent(".top-card-layout__title") ||
-            getTextContent("h1.topcard__title") ||
-            getTextContent("h2.t-24.t-bold") ||
-            getTextContent("h1") ||
-            "";
-
-        // Company Name
-        data.company =
-            getTextContent(".job-details-jobs-unified-top-card__company-name a") ||
-            getTextContent(".job-details-jobs-unified-top-card__company-name") ||
-            getTextContent(".jobs-unified-top-card__company-name a") ||
-            getTextContent(".jobs-unified-top-card__company-name") ||
-            getTextContent(".topcard__org-name-link") ||
-            getTextContent(".top-card-layout__flavor--black-link") ||
-            getTextContent("a.topcard__org-name-link") ||
-            "";
-
-        // Location
-        data.location =
-            getTextContent(".job-details-jobs-unified-top-card__bullet") ||
-            getTextContent(".jobs-unified-top-card__bullet") ||
-            getTextContent(".topcard__flavor--bullet") ||
-            getTextContent(".top-card-layout__second-subline span") ||
-            "";
-
-        // Workplace Type (Remote, Hybrid, On-site)
-        data.workplaceType =
-            getTextContent(".job-details-jobs-unified-top-card__workplace-type") ||
-            getTextContent(".jobs-unified-top-card__workplace-type") ||
-            "";
-
-        // Posted Date
-        data.postedDate =
-            getTextContent(".job-details-jobs-unified-top-card__posted-date") ||
-            getTextContent(".jobs-unified-top-card__posted-date") ||
-            getTextContent(".posted-time-ago__text") ||
-            "";
-
-        // Applicant Count
-        data.applicantCount =
-            getTextContent(".job-details-jobs-unified-top-card__applicant-count") ||
-            getTextContent(".jobs-unified-top-card__applicant-count") ||
-            getTextContent(".num-applicants__caption") ||
-            "";
-
-        // Job Description — critical field, try many selectors
-        data.description =
-            getTextContent(".jobs-description-content__text") ||
-            getTextContent(".jobs-description__content") ||
-            getTextContent(".jobs-box__html-content") ||
-            getTextContent("#job-details") ||
-            getTextContent(".job-details-jobs-unified-top-card__job-description") ||
-            getTextContent(".description__text") ||
-            getTextContent(".show-more-less-html__markup") ||
-            getTextContent("article.jobs-description") ||
-            // Fallback: try to find any "About the job" section
-            getDescriptionFromAboutSection() ||
-            "";
-
-        // Salary
-        data.salary =
-            getTextContent(".job-details-jobs-unified-top-card__job-insight--highlight") ||
-            getTextContent(".salary-main-rail__data-body") ||
-            getTextContent(".compensation__salary") ||
-            "";
-
-        // Job criteria items (Seniority, Employment Type, etc.)
-        const criteriaItems = document.querySelectorAll(
-            ".job-details-jobs-unified-top-card__job-insight, .jobs-unified-top-card__job-insight, .description__job-criteria-item, .jobs-box__list-item"
-        );
-        criteriaItems.forEach((item) => {
-            const text = item.textContent.trim();
-            const label = (
-                item.querySelector(
-                    ".job-details-jobs-unified-top-card__job-insight-view-model-secondary, h3, .t-black--light"
-                )?.textContent || ""
-            ).trim().toLowerCase();
-            const value = (
-                item.querySelector("span:last-child, .description__job-criteria-text, .t-black.t-normal")
-                    ?.textContent || ""
-            ).trim();
-
-            if (label.includes("seniority") || text.toLowerCase().includes("seniority"))
-                data.seniorityLevel = value || text;
-            if (label.includes("employment") || text.toLowerCase().includes("full-time") || text.toLowerCase().includes("part-time"))
-                data.employmentType = value || text;
-            if (label.includes("function") || text.toLowerCase().includes("function"))
-                data.jobFunction = value || text;
-            if (label.includes("industr") || text.toLowerCase().includes("industr"))
-                data.industries = value || text;
-        });
-
-        // Company About / Description
-        data.companyDescription =
-            getTextContent(".jobs-company__company-description") ||
-            getTextContent(".top-card-layout__card .topcard__flavor--metadata") ||
-            "";
-
-        // Clean up whitespace
-        Object.keys(data).forEach((key) => {
-            if (typeof data[key] === "string") {
-                data[key] = data[key].replace(/\s+/g, " ").trim();
-            }
-        });
-
-        console.log("[Content] Scraped data fields:", Object.keys(data).filter(k => data[k]).length, "non-empty");
-        console.log("[Content] Title:", data.title?.substring(0, 60));
-        console.log("[Content] Description length:", data.description?.length);
-
-        return data;
-    }
-
-    /**
-     * Fallback: try to find job description from "About the job" section
-     * by walking the DOM for known heading patterns.
-     */
-    function getDescriptionFromAboutSection() {
-        // Look for "About the job" heading and get its next sibling content
-        const headings = document.querySelectorAll("h2, h3, .t-20.t-bold, .t-16.t-bold");
-        for (const heading of headings) {
-            const text = heading.textContent.trim().toLowerCase();
-            if (text.includes("about the job") || text.includes("about this role")) {
-                // Get the next sibling element's text
-                let sibling = heading.nextElementSibling;
-                while (sibling) {
-                    const content = sibling.textContent.trim();
-                    if (content.length > 50) {
-                        return content;
-                    }
-                    sibling = sibling.nextElementSibling;
-                }
-                // Try parent's children
-                const parent = heading.closest("section, div, article");
-                if (parent) {
-                    const fullText = parent.textContent.trim();
-                    if (fullText.length > 100) return fullText;
-                }
-            }
-        }
-        return null;
-    }
-
+    // ── Helper: try multiple selectors and return first match ──
     function getTextContent(selector) {
         try {
             const el = document.querySelector(selector);
@@ -187,19 +37,398 @@
         }
     }
 
+    function getTextFromSelectors(selectors) {
+        for (const sel of selectors) {
+            const result = getTextContent(sel);
+            if (result) return result;
+        }
+        return null;
+    }
+
+    // ── Helper: wildcard attribute match ────────────────────────
+    // LinkedIn changes exact class names but keeps partial patterns
+    function getTextByAttrContains(attrValue, tag = "*") {
+        try {
+            const el = document.querySelector(`${tag}[class*="${attrValue}"]`);
+            if (!el) return null;
+            const text = el.textContent.trim();
+            return text.length > 0 ? text : null;
+        } catch {
+            return null;
+        }
+    }
+
+    // ── Scrape Job Data ──────────────────────────────────────
+    function scrapeJobData() {
+        const data = {};
+
+        // --- DEBUG: Log what the DOM looks like for future troubleshooting ---
+        const jobDetailPane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"], [class*="jobs-details"]');
+        if (jobDetailPane) {
+            console.log("[Content] Found job detail pane:", jobDetailPane.className);
+        } else {
+            console.log("[Content] No job detail pane found. Available top-level classes:", 
+                [...document.querySelectorAll('[class*="job"]')].slice(0, 10).map(el => el.className).join(" | "));
+        }
+
+        // Job Title — try multiple selectors (LinkedIn A/B tests class names)
+        data.title =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__job-title h1",
+                ".job-details-jobs-unified-top-card__job-title",
+                ".jobs-unified-top-card__job-title",
+                ".t-24.t-bold.inline",
+                ".top-card-layout__title",
+                "h1.topcard__title",
+                "h2.t-24.t-bold",
+            ]) ||
+            getTextByAttrContains("job-title", "h1") ||
+            getTextByAttrContains("job-title") ||
+            getTextByAttrContains("topcard__title") ||
+            // Broader fallback: the first h1 inside the job detail pane
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    const h1 = pane.querySelector("h1");
+                    if (h1) return h1.textContent.trim();
+                }
+                // Last resort: first h1 on page (risky but better than nothing)
+                return getTextContent("h1");
+            })() ||
+            "";
+
+        // Company Name
+        data.company =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__company-name a",
+                ".job-details-jobs-unified-top-card__company-name",
+                ".jobs-unified-top-card__company-name a",
+                ".jobs-unified-top-card__company-name",
+                ".topcard__org-name-link",
+                ".top-card-layout__flavor--black-link",
+                "a.topcard__org-name-link",
+            ]) ||
+            getTextByAttrContains("company-name", "a") ||
+            getTextByAttrContains("company-name") ||
+            getTextByAttrContains("org-name") ||
+            // Broader fallback: look for company link near the title
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    // Company name is usually the first prominent link after the title
+                    const links = pane.querySelectorAll("a");
+                    for (const link of links) {
+                        const href = link.getAttribute("href") || "";
+                        if (href.includes("/company/")) {
+                            const text = link.textContent.trim();
+                            if (text.length > 1 && text.length < 100) return text;
+                        }
+                    }
+                }
+                return null;
+            })() ||
+            "";
+
+        // Location
+        data.location =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__bullet",
+                ".jobs-unified-top-card__bullet",
+                ".topcard__flavor--bullet",
+                ".top-card-layout__second-subline span",
+            ]) ||
+            getTextByAttrContains("bullet") ||
+            // Fallback: look for location-like text near badges
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    const spans = pane.querySelectorAll("span");
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        // Location patterns: contains comma + region/country names
+                        if (text.length > 3 && text.length < 80 &&
+                            (text.includes(",") || text.match(/\b(Remote|Hybrid|On-site|India|USA|UK|Bengaluru|Bangalore|Mumbai|Delhi|Hyderabad)\b/i))) {
+                            // Make sure it's not inside a button or link to another job
+                            if (!span.closest("button, [class*='btn'], [class*='footer']")) {
+                                return text;
+                            }
+                        }
+                    }
+                }
+                return null;
+            })() ||
+            "";
+
+        // Workplace Type (Remote, Hybrid, On-site)
+        data.workplaceType =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__workplace-type",
+                ".jobs-unified-top-card__workplace-type",
+            ]) ||
+            getTextByAttrContains("workplace-type") ||
+            // Fallback: look for badge/pill with workplace type text
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    const pills = pane.querySelectorAll('li, span[class*="tag"], span[class*="pill"], span[class*="badge"]');
+                    for (const pill of pills) {
+                        const text = pill.textContent.trim().toLowerCase();
+                        if (text === "remote" || text === "on-site" || text === "hybrid") {
+                            return pill.textContent.trim();
+                        }
+                    }
+                }
+                return null;
+            })() ||
+            "";
+
+        // Posted Date
+        data.postedDate =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__posted-date",
+                ".jobs-unified-top-card__posted-date",
+                ".posted-time-ago__text",
+            ]) ||
+            getTextByAttrContains("posted-date") ||
+            // Fallback: look for "X days ago" / "X hours ago" pattern
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    const spans = pane.querySelectorAll("span");
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        if (text.match(/\d+\s+(day|hour|week|month|minute)s?\s+ago/i)) {
+                            return text;
+                        }
+                    }
+                }
+                return null;
+            })() ||
+            "";
+
+        // Applicant Count
+        data.applicantCount =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__applicant-count",
+                ".jobs-unified-top-card__applicant-count",
+                ".num-applicants__caption",
+            ]) ||
+            getTextByAttrContains("applicant") ||
+            // Fallback: look for "Over X applicants" pattern
+            (() => {
+                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
+                if (pane) {
+                    const spans = pane.querySelectorAll("span");
+                    for (const span of spans) {
+                        const text = span.textContent.trim();
+                        if (text.match(/\d+\s*applicant/i) || text.match(/over\s+\d+/i)) {
+                            return text;
+                        }
+                    }
+                }
+                return null;
+            })() ||
+            "";
+
+        // Job Description — critical field, try many selectors
+        data.description =
+            getTextFromSelectors([
+                ".jobs-description-content__text",
+                ".jobs-description__content",
+                ".jobs-box__html-content",
+                "#job-details",
+                ".job-details-jobs-unified-top-card__job-description",
+                ".description__text",
+                ".show-more-less-html__markup",
+                "article.jobs-description",
+            ]) ||
+            getTextByAttrContains("description-content") ||
+            getTextByAttrContains("jobs-description") ||
+            getTextByAttrContains("job-details") ||
+            // Fallback: try to find any "About the job" section
+            getDescriptionFromAboutSection() ||
+            // Nuclear fallback: scrape any large text block from the detail pane
+            getDescriptionNuclearFallback() ||
+            "";
+
+        // Salary
+        data.salary =
+            getTextFromSelectors([
+                ".job-details-jobs-unified-top-card__job-insight--highlight",
+                ".salary-main-rail__data-body",
+                ".compensation__salary",
+            ]) ||
+            getTextByAttrContains("salary") ||
+            getTextByAttrContains("compensation") ||
+            "";
+
+        // Job criteria items (Seniority, Employment Type, etc.)
+        const criteriaItems = document.querySelectorAll(
+            '[class*="job-insight"], [class*="job-criteria"], .description__job-criteria-item, .jobs-box__list-item'
+        );
+        criteriaItems.forEach((item) => {
+            const text = item.textContent.trim();
+            const label = (
+                item.querySelector(
+                    '[class*="insight-view-model-secondary"], h3, .t-black--light, [class*="subtitle"]'
+                )?.textContent || ""
+            ).trim().toLowerCase();
+            const value = (
+                item.querySelector('span:last-child, [class*="criteria-text"], .t-black.t-normal')
+                    ?.textContent || ""
+            ).trim();
+
+            if (label.includes("seniority") || text.toLowerCase().includes("seniority"))
+                data.seniorityLevel = value || text;
+            if (label.includes("employment") || text.toLowerCase().includes("full-time") || text.toLowerCase().includes("part-time") || text.toLowerCase().includes("internship"))
+                data.employmentType = value || text;
+            if (label.includes("function") || text.toLowerCase().includes("function"))
+                data.jobFunction = value || text;
+            if (label.includes("industr") || text.toLowerCase().includes("industr"))
+                data.industries = value || text;
+        });
+
+        // Also extract from pill/badge elements (On-site, Internship, etc.)
+        const pills = document.querySelectorAll('.jobs-search__job-details li span, .scaffold-layout__detail li span, [class*="job-details"] li span');
+        for (const pill of pills) {
+            const text = pill.textContent.trim().toLowerCase();
+            if (text === "internship" || text === "full-time" || text === "part-time" || text === "contract")
+                data.employmentType = data.employmentType || pill.textContent.trim();
+            if (text === "on-site" || text === "remote" || text === "hybrid")
+                data.workplaceType = data.workplaceType || pill.textContent.trim();
+        }
+
+        // Company About / Description
+        data.companyDescription =
+            getTextFromSelectors([
+                ".jobs-company__company-description",
+                ".top-card-layout__card .topcard__flavor--metadata",
+            ]) ||
+            getTextByAttrContains("company-description") ||
+            "";
+
+        // Clean up whitespace
+        Object.keys(data).forEach((key) => {
+            if (typeof data[key] === "string") {
+                data[key] = data[key].replace(/\s+/g, " ").trim();
+            }
+        });
+
+        console.log("[Content] Scraped data fields:", Object.keys(data).filter(k => data[k]).length, "non-empty");
+        console.log("[Content] Title:", data.title?.substring(0, 60));
+        console.log("[Content] Company:", data.company?.substring(0, 60));
+        console.log("[Content] Description length:", data.description?.length);
+
+        return data;
+    }
+
+    /**
+     * Fallback: try to find job description from "About the job" section
+     * by walking the DOM for known heading patterns.
+     */
+    function getDescriptionFromAboutSection() {
+        // Strategy 1: Look for "About the job" heading text
+        const allElements = document.querySelectorAll("h2, h3, h4, span, div, p, [class*='t-bold']");
+        for (const el of allElements) {
+            // Only check direct text, not deeply nested
+            const directText = el.childNodes.length <= 3
+                ? el.textContent.trim().toLowerCase()
+                : "";
+            if (directText === "about the job" || directText === "about this role" || directText === "about the role") {
+                // Walk up to the section container and get sibling content
+                let container = el.closest("section, div[class], article");
+                if (container) {
+                    // Get all text after this heading within the container
+                    let sibling = el.nextElementSibling;
+                    while (sibling) {
+                        const content = sibling.textContent.trim();
+                        if (content.length > 50) {
+                            return content;
+                        }
+                        sibling = sibling.nextElementSibling;
+                    }
+                    // If no sibling worked, try the whole container minus the heading
+                    const fullText = container.textContent.trim();
+                    if (fullText.length > 100) return fullText;
+                }
+
+                // Also try parent's next sibling
+                let parentSibling = el.parentElement?.nextElementSibling;
+                while (parentSibling) {
+                    const content = parentSibling.textContent.trim();
+                    if (content.length > 50) {
+                        return content;
+                    }
+                    parentSibling = parentSibling.nextElementSibling;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Nuclear fallback: find the largest text block in the job detail pane.
+     * This handles cases where LinkedIn completely changes their class names.
+     */
+    function getDescriptionNuclearFallback() {
+        // Find the right-side detail pane
+        const pane = document.querySelector(
+            '.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"], [class*="jobs-details"]'
+        );
+        const container = pane || document;
+
+        // Find all divs/sections with substantial text
+        const candidates = container.querySelectorAll("div, section, article");
+        let bestText = null;
+        let bestLength = 200; // Minimum threshold
+
+        for (const el of candidates) {
+            // Skip if it's a top-level layout container (too broad)
+            if (el.closest("nav, header, footer, [class*='sidebar'], [class*='list']")) continue;
+            // Skip elements that contain form elements (application sections)
+            if (el.querySelector("form, input, button[type='submit']")) continue;
+
+            const text = el.textContent.trim();
+            // Look for elements with job-description-like content
+            const lowerText = text.toLowerCase();
+            const hasJobKeywords = (
+                lowerText.includes("responsibilities") ||
+                lowerText.includes("requirements") ||
+                lowerText.includes("qualifications") ||
+                lowerText.includes("experience") ||
+                lowerText.includes("about the role") ||
+                lowerText.includes("about the job") ||
+                lowerText.includes("what you") ||
+                lowerText.includes("we are looking")
+            );
+
+            if (hasJobKeywords && text.length > bestLength && text.length < 20000) {
+                bestLength = text.length;
+                bestText = text;
+            }
+        }
+
+        if (bestText) {
+            console.log("[Content] Used nuclear fallback for description, length:", bestText.length);
+        }
+        return bestText;
+    }
+
     /**
      * Wait for job content to load in the DOM (LinkedIn loads async).
      * Retries up to maxAttempts with a delay between each attempt.
      */
-    async function waitForJobContent(maxAttempts = 3, delayMs = 1000) {
+    async function waitForJobContent(maxAttempts = 5, delayMs = 800) {
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             const data = scrapeJobData();
             if (data.title || data.description) {
+                console.log(`[Content] Found job content on attempt ${attempt + 1}`);
                 return data;
             }
             console.log(`[Content] Waiting for job content (attempt ${attempt + 1}/${maxAttempts})...`);
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
+        console.log("[Content] Final scrape attempt after all retries");
         return scrapeJobData(); // Final attempt
     }
 
