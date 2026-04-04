@@ -327,39 +327,87 @@
      * by walking the DOM for known heading patterns.
      */
     function getDescriptionFromAboutSection() {
-        // Strategy 1: Look for "About the job" heading text
-        const allElements = document.querySelectorAll("h2, h3, h4, span, div, p, [class*='t-bold']");
-        for (const el of allElements) {
-            // Only check direct text, not deeply nested
-            const directText = el.childNodes.length <= 3
-                ? el.textContent.trim().toLowerCase()
-                : "";
-            if (directText === "about the job" || directText === "about this role" || directText === "about the role") {
-                // Walk up to the section container and get sibling content
-                let container = el.closest("section, div[class], article");
-                if (container) {
-                    // Get all text after this heading within the container
-                    let sibling = el.nextElementSibling;
-                    while (sibling) {
-                        const content = sibling.textContent.trim();
-                        if (content.length > 50) {
-                            return content;
-                        }
-                        sibling = sibling.nextElementSibling;
+        // Strategy 1: Use TreeWalker to find text nodes containing "About the job"
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: (node) => {
+                    const text = node.textContent.trim().toLowerCase();
+                    if (text === "about the job" || text === "about this role" || text === "about the role") {
+                        return NodeFilter.FILTER_ACCEPT;
                     }
-                    // If no sibling worked, try the whole container minus the heading
-                    const fullText = container.textContent.trim();
-                    if (fullText.length > 100) return fullText;
+                    return NodeFilter.FILTER_SKIP;
                 }
+            }
+        );
 
-                // Also try parent's next sibling
-                let parentSibling = el.parentElement?.nextElementSibling;
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+            // Found the heading text node — now find the description content near it
+            const headingEl = textNode.parentElement;
+            if (!headingEl) continue;
+            console.log("[Content] Found 'About the job' heading in:", headingEl.tagName, headingEl.className);
+
+            // Strategy A: Look at siblings of the heading element
+            let sibling = headingEl.nextElementSibling;
+            while (sibling) {
+                const content = sibling.textContent.trim();
+                if (content.length > 50) {
+                    console.log("[Content] Found description via sibling, length:", content.length);
+                    return content;
+                }
+                sibling = sibling.nextElementSibling;
+            }
+
+            // Strategy B: Look at siblings of the heading's parent
+            let parent = headingEl.parentElement;
+            for (let depth = 0; depth < 3 && parent; depth++) {
+                let parentSibling = parent.nextElementSibling;
                 while (parentSibling) {
                     const content = parentSibling.textContent.trim();
                     if (content.length > 50) {
+                        console.log("[Content] Found description via parent sibling (depth " + depth + "), length:", content.length);
                         return content;
                     }
                     parentSibling = parentSibling.nextElementSibling;
+                }
+                parent = parent.parentElement;
+            }
+
+            // Strategy C: Get the closest section/container and take ALL its text
+            const container = headingEl.closest("section, article, div");
+            if (container) {
+                const fullText = container.textContent.trim();
+                if (fullText.length > 100) {
+                    console.log("[Content] Found description via container, length:", fullText.length);
+                    return fullText;
+                }
+            }
+        }
+
+        // Strategy 2: Also check for elements using includes() (less strict)
+        const allElements = document.querySelectorAll("h2, h3, h4, span, div, p");
+        for (const el of allElements) {
+            const text = el.textContent.trim().toLowerCase();
+            // Only check elements with short text (likely headings, not full paragraphs)
+            if (text.length > 50) continue;
+            if (text.includes("about the job") || text.includes("about this role") || text.includes("about the role")) {
+                let sibling = el.nextElementSibling;
+                while (sibling) {
+                    const content = sibling.textContent.trim();
+                    if (content.length > 50) return content;
+                    sibling = sibling.nextElementSibling;
+                }
+                let parent = el.parentElement;
+                for (let depth = 0; depth < 3 && parent; depth++) {
+                    let parentSibling = parent.nextElementSibling;
+                    while (parentSibling) {
+                        const content = parentSibling.textContent.trim();
+                        if (content.length > 50) return content;
+                        parentSibling = parentSibling.nextElementSibling;
+                    }
+                    parent = parent.parentElement;
                 }
             }
         }
@@ -371,22 +419,16 @@
      * This handles cases where LinkedIn completely changes their class names.
      */
     function getDescriptionNuclearFallback() {
-        // Find the right-side detail pane
-        const pane = document.querySelector(
-            '.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"], [class*="jobs-details"]'
-        );
-        const container = pane || document;
-
-        // Find all divs/sections with substantial text
-        const candidates = container.querySelectorAll("div, section, article");
+        // Find all divs/sections with substantial text - search the ENTIRE document
+        const candidates = document.querySelectorAll("div, section, article");
         let bestText = null;
         let bestLength = 200; // Minimum threshold
 
         for (const el of candidates) {
-            // Skip if it's a top-level layout container (too broad)
-            if (el.closest("nav, header, footer, [class*='sidebar'], [class*='list']")) continue;
-            // Skip elements that contain form elements (application sections)
-            if (el.querySelector("form, input, button[type='submit']")) continue;
+            // Skip only truly irrelevant containers
+            if (el.closest("nav, footer")) continue;
+            // Skip our own extension elements
+            if (el.id && el.id.startsWith("ljp-")) continue;
 
             const text = el.textContent.trim();
             // Look for elements with job-description-like content
@@ -399,7 +441,11 @@
                 lowerText.includes("about the role") ||
                 lowerText.includes("about the job") ||
                 lowerText.includes("what you") ||
-                lowerText.includes("we are looking")
+                lowerText.includes("we are looking") ||
+                lowerText.includes("we're looking") ||
+                lowerText.includes("job description") ||
+                lowerText.includes("key skills") ||
+                lowerText.includes("who you are")
             );
 
             if (hasJobKeywords && text.length > bestLength && text.length < 20000) {
@@ -412,6 +458,85 @@
             console.log("[Content] Used nuclear fallback for description, length:", bestText.length);
         }
         return bestText;
+    }
+
+    /**
+     * ABSOLUTE LAST RESORT: Extract raw visible text from the page.
+     * This CANNOT fail — it grabs all visible text and tries to parse it.
+     */
+    function rawTextFallback() {
+        console.log("[Content] === USING RAW TEXT FALLBACK ===");
+        const data = {};
+
+        // Get ALL visible text on the page
+        const fullPageText = document.body.innerText;
+        console.log("[Content] Full page text length:", fullPageText.length);
+
+        // Try to extract title from any h1 on the page (tag-based, no classes)
+        const h1Elements = document.getElementsByTagName("h1");
+        for (const h1 of h1Elements) {
+            const text = h1.innerText.trim();
+            if (text.length > 2 && text.length < 200) {
+                data.title = text;
+                console.log("[Content] Raw fallback found h1 title:", text);
+                break;
+            }
+        }
+
+        // Try h2 if no h1
+        if (!data.title) {
+            const h2Elements = document.getElementsByTagName("h2");
+            for (const h2 of h2Elements) {
+                const text = h2.innerText.trim();
+                if (text.length > 2 && text.length < 200) {
+                    data.title = text;
+                    console.log("[Content] Raw fallback found h2 title:", text);
+                    break;
+                }
+            }
+        }
+
+        // Try to find company by looking for links to /company/ pages
+        const allLinks = document.getElementsByTagName("a");
+        for (const link of allLinks) {
+            const href = link.getAttribute("href") || "";
+            if (href.includes("/company/") && !href.includes("/jobs")) {
+                const text = link.innerText.trim();
+                if (text.length > 1 && text.length < 100) {
+                    data.company = text;
+                    console.log("[Content] Raw fallback found company:", text);
+                    break;
+                }
+            }
+        }
+
+        // For description, find "About the job" in the visible text and take everything after it
+        const aboutIdx = fullPageText.toLowerCase().indexOf("about the job");
+        if (aboutIdx !== -1) {
+            // Take text from "About the job" onwards (up to 10000 chars)
+            data.description = fullPageText.substring(aboutIdx, aboutIdx + 10000).trim();
+            console.log("[Content] Raw fallback found description from 'About the job', length:", data.description.length);
+        } else {
+            // Just take a big chunk of the page text as description
+            // Skip first 500 chars (likely navigation) and take up to 10000
+            data.description = fullPageText.substring(500, 10500).trim();
+            console.log("[Content] Raw fallback using page text slice, length:", data.description.length);
+        }
+
+        // Try to find location by looking for common patterns
+        const locationMatch = fullPageText.match(/([A-Z][a-z]+(?:,\s*[A-Z][a-z]+)*(?:,\s*(?:India|USA|UK|Canada|Australia|Germany|Singapore)))/m);
+        if (locationMatch) {
+            data.location = locationMatch[1];
+        }
+
+        // Clean up
+        Object.keys(data).forEach((key) => {
+            if (typeof data[key] === "string") {
+                data[key] = data[key].replace(/\s+/g, " ").trim();
+            }
+        });
+
+        return data;
     }
 
     /**
@@ -571,19 +696,30 @@
 
         try {
             // Wait for job content to load (LinkedIn loads async)
-            const jobData = await waitForJobContent(3, 1000);
+            let jobData = await waitForJobContent(5, 800);
 
             // Extract links from the job description DOM
             const domLinks = extractLinksFromDOM();
 
-            // Validate we have something to analyze
+            // If structured scraping failed, use raw text fallback
             if (!jobData.title && !jobData.description) {
-                throw new Error(
-                    "No job data found on this page. Make sure you're viewing a specific job listing (click on a job from the list)."
-                );
+                console.log("[Content] Structured scraping failed — trying raw text fallback...");
+                jobData = rawTextFallback();
             }
 
-            console.log(`[Content] Sending to pipeline: ${Object.keys(jobData).length} fields, ${domLinks.length} DOM links`);
+            // Validate we have something to analyze
+            if (!jobData.title && !jobData.description) {
+                // Last absolute resort — just grab document.body.innerText
+                console.log("[Content] Even raw fallback failed — sending full page text");
+                jobData = {
+                    title: document.title || "LinkedIn Job",
+                    description: document.body.innerText.substring(0, 10000),
+                    company: "",
+                    location: "",
+                };
+            }
+
+            console.log(`[Content] Sending to pipeline: title=${!!jobData.title}, desc_len=${jobData.description?.length || 0}, ${domLinks.length} DOM links`);
 
             // Send job data + DOM links to background pipeline
             const response = await chrome.runtime.sendMessage({
