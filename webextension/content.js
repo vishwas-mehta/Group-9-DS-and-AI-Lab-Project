@@ -676,11 +676,15 @@
     }
 
     // Listen for progress updates from background
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message.type === 'ANALYSIS_PROGRESS') {
-            showProgressIndicator(message.data);
-        }
-    });
+    try {
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            if (message.type === 'ANALYSIS_PROGRESS') {
+                showProgressIndicator(message.data);
+            }
+        });
+    } catch (e) {
+        // Extension context already invalidated at injection time — ignore
+    }
 
     // ── Handle Analyze Click ─────────────────────────────────
     async function handleAnalyzeClick() {
@@ -695,6 +699,12 @@
         btn.disabled = true;
 
         try {
+            // Check if the extension context is still valid (can be invalidated after reload)
+            if (!chrome.runtime?.id) {
+                showErrorOverlay("Extension was reloaded. Please refresh this page and try again.");
+                return;
+            }
+
             // Wait for job content to load (LinkedIn loads async)
             let jobData = await waitForJobContent(5, 800);
 
@@ -736,7 +746,11 @@
                 showErrorOverlay(response.error);
             }
         } catch (error) {
-            showErrorOverlay(error.message);
+            if (error.message?.includes("Extension context invalidated") || !chrome.runtime?.id) {
+                showErrorOverlay("Extension was reloaded. Please refresh this page and try again.");
+            } else {
+                showErrorOverlay(error.message);
+            }
         } finally {
             // Reset button
             btn.classList.remove("ljp-loading");

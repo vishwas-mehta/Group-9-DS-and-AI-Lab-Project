@@ -11,8 +11,8 @@ import { BaseTool, ToolResult } from "../lib/langchain-core.js";
  * Centralized here so it's easy to modify or switch models.
  */
 const GEMINI_CONFIG = {
-    model: "gemini-1.5-flash",
-    baseUrl: "https://generativelanguage.googleapis.com/v1/models",
+    model: "gemini-2.5-flash",
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta/models",
     temperature: 0.3,
     topP: 0.8,
     maxOutputTokens: 2048,
@@ -26,19 +26,19 @@ const ANALYSIS_DEPTHS = {
     quick: {
         systemPromptAddition:
             "Provide a brief analysis. Focus on the most obvious red flags only.",
-        maxOutputTokens: 1024,
+        maxOutputTokens: 2048,
         temperature: 0.2,
     },
     standard: {
         systemPromptAddition:
             "Provide a thorough analysis covering all red flag categories.",
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
         temperature: 0.3,
     },
     deep: {
         systemPromptAddition:
             "Provide an extremely detailed analysis. Cross-reference all available data, check for consistency between the job description and external content, and provide specific evidence for each finding. Include a risk score breakdown.",
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         temperature: 0.4,
     },
 };
@@ -367,6 +367,12 @@ Industries: ${jobData.industries || "Not found"}`;
             const parsed = JSON.parse(cleanedText);
             return this._validateResponse(parsed);
         } catch (e) {
+            // Response may be truncated — try to extract key fields via regex
+            const partial = this._extractPartialResponse(cleanedText);
+            if (partial) {
+                console.warn("[JobAnalyzer] Used partial JSON fallback — response was truncated");
+                return this._validateResponse(partial);
+            }
             throw new Error(
                 "Failed to parse Gemini response as JSON. Raw: " +
                 text.substring(0, 300)
@@ -375,9 +381,54 @@ Industries: ${jobData.industries || "Not found"}`;
     }
 
     /**
+     * Extract key fields from a truncated/malformed JSON string using regex.
+     * Returns null if nothing useful can be extracted.
+     *
+     * @param {string} text
+     * @returns {Object|null}
+     */
+    _extractPartialResponse(text) {
+        const get = (pattern) => {
+            const m = text.match(pattern);
+            return m ? m[1] : null;
+        };
+
+        const verdict = get(/"verdict"\s*:\s*"(SAFE|SUSPICIOUS|LIKELY_FAKE)"/);
+        if (!verdict) return null; // Can't produce a meaningful result without verdict
+
+        const confidence = get(/"confidence"\s*:\s*(\d+)/);
+
+        const summary = get(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+
+        // Extract as many complete reason strings as possible
+        const reasons = [];
+        const reasonPattern = /"([^"]{10,})"/g;
+        const reasonsStart = text.indexOf('"reasons"');
+        const reasonsEnd = text.indexOf(']', reasonsStart);
+        if (reasonsStart !== -1) {
+            const reasonsSlice = reasonsEnd !== -1
+                ? text.slice(reasonsStart, reasonsEnd)
+                : text.slice(reasonsStart, reasonsStart + 500);
+            let m;
+            // Skip the key "reasons" itself
+            reasonPattern.lastIndex = reasonsStart + 10;
+            while ((m = reasonPattern.exec(reasonsSlice)) !== null) {
+                if (m[1] !== "reasons") reasons.push(m[1]);
+            }
+        }
+
+        return {
+            verdict,
+            confidence: confidence ? parseInt(confidence) : 50,
+            summary: summary || "Analysis partially completed (response was truncated).",
+            reasons: reasons.length > 0 ? reasons : ["Analysis truncated — please retry for full results."],
+        };
+    }
+
+    /**
      * Validate and normalize the AI response.
      * Ensures all required fields are present with correct types.
-     * 
+     *
      * @param {Object} response
      * @returns {Object} Validated response
      */
