@@ -335,14 +335,8 @@ print(f"[STAGE 8] Loading model from: {BEST_MODEL_DIR}")
 
 try:
     # 🔥 FORCE correct download (avoids cache issues)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        BEST_MODEL_DIR,
-        force_download=True
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        BEST_MODEL_DIR,
-        force_download=True
-    )
+    model = AutoModelForSequenceClassification.from_pretrained(BEST_MODEL_DIR)
+    tokenizer = AutoTokenizer.from_pretrained(BEST_MODEL_DIR)
 
     # ── Load inference config if exists (only for local path) ──
     cfg_path = os.path.join(BEST_MODEL_DIR, "inference_config.json")
