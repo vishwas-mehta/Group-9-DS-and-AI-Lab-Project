@@ -45,6 +45,40 @@
         return null;
     }
 
+    // ── Helper: check if an element is actually visible ──────────
+    // Filters out aria-hidden and visually-hidden elements that
+    // LinkedIn uses for accessibility (e.g. notification count h1).
+    function isVisible(el) {
+        if (!el) return false;
+        if (el.getAttribute("aria-hidden") === "true") return false;
+        if (el.closest('[aria-hidden="true"]')) return false;
+        const cls = (el.className || "") + " " + (el.closest("[class]")?.className || "");
+        if (/visually.?hidden|sr-only|screen-reader/i.test(cls)) return false;
+        // offsetParent is null for display:none elements (except position:fixed)
+        if (el.offsetParent === null && getComputedStyle(el).position !== "fixed") return false;
+        return true;
+    }
+
+    // ── Helper: reject obviously non-job-title strings ────────────
+    // Catches "0 notifications", "Home", "Menu", etc.
+    function isValidJobTitle(title) {
+        if (!title || title.length < 2 || title.length > 200) return false;
+        return !/^\d+\s+notification|^(home|menu|nav|search|messaging|connections|jobs)$/i.test(title.trim());
+    }
+
+    // ── Helper: parse document.title → {title, company} ──────────
+    // LinkedIn formats job page titles as "Job Title at Company | LinkedIn"
+    // This is the most reliable source — LinkedIn controls it server-side.
+    function parseDocumentTitle() {
+        const raw = document.title || "";
+        // Pattern: "Software Engineer at Google | LinkedIn"
+        const m = raw.match(/^(.+?)\s+at\s+(.+?)\s*[\|·]/);
+        if (m) return { title: m[1].trim(), company: m[2].trim() };
+        // Fallback: strip " | LinkedIn" suffix and use as title only
+        const cleaned = raw.replace(/\s*[\|·].*$/, "").trim();
+        return cleaned.length > 2 ? { title: cleaned, company: "" } : null;
+    }
+
     // ── Helper: wildcard attribute match ────────────────────────
     // LinkedIn changes exact class names but keeps partial patterns
     function getTextByAttrContains(attrValue, tag = "*") {
@@ -62,17 +96,23 @@
     function scrapeJobData() {
         const data = {};
 
+        // ── Step 0: Parse document.title (most reliable source) ──────────────
+        // LinkedIn sets this server-side: "Job Title at Company | LinkedIn"
+        const docTitleParsed = parseDocumentTitle();
+        if (docTitleParsed) {
+            console.log("[Content] Parsed document.title:", docTitleParsed);
+        }
+
         // --- DEBUG: Log what the DOM looks like for future troubleshooting ---
         const jobDetailPane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"], [class*="jobs-details"]');
         if (jobDetailPane) {
             console.log("[Content] Found job detail pane:", jobDetailPane.className);
         } else {
-            console.log("[Content] No job detail pane found. Available top-level classes:", 
-                [...document.querySelectorAll('[class*="job"]')].slice(0, 10).map(el => el.className).join(" | "));
+            console.log("[Content] No job detail pane found.");
         }
 
-        // Job Title — try multiple selectors (LinkedIn A/B tests class names)
-        data.title =
+        // Job Title — document.title first, then DOM selectors, never take hidden h1s
+        const domTitle =
             getTextFromSelectors([
                 ".job-details-jobs-unified-top-card__job-title h1",
                 ".job-details-jobs-unified-top-card__job-title",
@@ -85,19 +125,33 @@
             getTextByAttrContains("job-title", "h1") ||
             getTextByAttrContains("job-title") ||
             getTextByAttrContains("topcard__title") ||
-            // Broader fallback: the first h1 inside the job detail pane
+            // Pane-scoped h1 — only take if element is visible and title looks valid
             (() => {
                 const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
                 if (pane) {
-                    const h1 = pane.querySelector("h1");
-                    if (h1) return h1.textContent.trim();
+                    for (const h1 of pane.querySelectorAll("h1")) {
+                        const text = h1.textContent.trim();
+                        if (isVisible(h1) && isValidJobTitle(text)) return text;
+                    }
                 }
-                // Last resort: first h1 on page (risky but better than nothing)
-                return getTextContent("h1");
+                return null;
             })() ||
-            "";
+            // Page-wide visible h1 scan (skip notification/hidden elements)
+            (() => {
+                for (const h1 of document.querySelectorAll("h1")) {
+                    const text = h1.textContent.trim();
+                    if (isVisible(h1) && isValidJobTitle(text)) return text;
+                }
+                return null;
+            })() ||
+            null;
 
-        // Company Name
+        // Prefer a valid DOM title; fall back to document.title parse
+        data.title = (isValidJobTitle(domTitle) ? domTitle : null)
+            || docTitleParsed?.title
+            || "";
+
+        // Company Name — /company/ links are the most reliable DOM signal
         data.company =
             getTextFromSelectors([
                 ".job-details-jobs-unified-top-card__company-name a",
@@ -111,22 +165,15 @@
             getTextByAttrContains("company-name", "a") ||
             getTextByAttrContains("company-name") ||
             getTextByAttrContains("org-name") ||
-            // Broader fallback: look for company link near the title
+            // Search entire page for /company/ links (stable LinkedIn URL pattern)
             (() => {
-                const pane = document.querySelector('.jobs-search__job-details, .scaffold-layout__detail, [class*="job-details"]');
-                if (pane) {
-                    // Company name is usually the first prominent link after the title
-                    const links = pane.querySelectorAll("a");
-                    for (const link of links) {
-                        const href = link.getAttribute("href") || "";
-                        if (href.includes("/company/")) {
-                            const text = link.textContent.trim();
-                            if (text.length > 1 && text.length < 100) return text;
-                        }
-                    }
+                for (const link of document.querySelectorAll("a[href*='/company/']")) {
+                    const text = link.textContent.trim();
+                    if (text.length > 1 && text.length < 100 && isVisible(link)) return text;
                 }
                 return null;
             })() ||
+            docTitleParsed?.company ||
             "";
 
         // Location
@@ -230,17 +277,18 @@
             })() ||
             "";
 
-        // Job Description — critical field, try many selectors
+        // Job Description — #job-details is LinkedIn's stable ID, try it first
         data.description =
             getTextFromSelectors([
+                "#job-details",                                              // stable LinkedIn ID
                 ".jobs-description-content__text",
                 ".jobs-description__content",
                 ".jobs-box__html-content",
-                "#job-details",
                 ".job-details-jobs-unified-top-card__job-description",
                 ".description__text",
                 ".show-more-less-html__markup",
                 "article.jobs-description",
+                "[class*='jobs-description']",
             ]) ||
             getTextByAttrContains("description-content") ||
             getTextByAttrContains("jobs-description") ||
@@ -472,23 +520,31 @@
         const fullPageText = document.body.innerText;
         console.log("[Content] Full page text length:", fullPageText.length);
 
-        // Try to extract title from any h1 on the page (tag-based, no classes)
-        const h1Elements = document.getElementsByTagName("h1");
-        for (const h1 of h1Elements) {
-            const text = h1.innerText.trim();
-            if (text.length > 2 && text.length < 200) {
-                data.title = text;
-                console.log("[Content] Raw fallback found h1 title:", text);
-                break;
+        // Try document.title parse first — most reliable
+        const dtParsed = parseDocumentTitle();
+        if (dtParsed?.title) {
+            data.title = dtParsed.title;
+            data.company = data.company || dtParsed.company;
+            console.log("[Content] Raw fallback used document.title:", data.title);
+        }
+
+        // Try visible h1 elements (skip notification/hidden h1s)
+        if (!data.title) {
+            for (const h1 of document.getElementsByTagName("h1")) {
+                const text = h1.innerText.trim();
+                if (isVisible(h1) && isValidJobTitle(text)) {
+                    data.title = text;
+                    console.log("[Content] Raw fallback found visible h1 title:", text);
+                    break;
+                }
             }
         }
 
-        // Try h2 if no h1
+        // Try h2 if no h1 found
         if (!data.title) {
-            const h2Elements = document.getElementsByTagName("h2");
-            for (const h2 of h2Elements) {
+            for (const h2 of document.getElementsByTagName("h2")) {
                 const text = h2.innerText.trim();
-                if (text.length > 2 && text.length < 200) {
+                if (isVisible(h2) && isValidJobTitle(text)) {
                     data.title = text;
                     console.log("[Content] Raw fallback found h2 title:", text);
                     break;
@@ -546,15 +602,17 @@
     async function waitForJobContent(maxAttempts = 5, delayMs = 800) {
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
             const data = scrapeJobData();
-            if (data.title || data.description) {
-                console.log(`[Content] Found job content on attempt ${attempt + 1}`);
+            const hasValidTitle = data.title && isValidJobTitle(data.title);
+            const hasDescription = data.description && data.description.length > 50;
+            if (hasValidTitle || hasDescription) {
+                console.log(`[Content] Found job content on attempt ${attempt + 1} — title: "${data.title?.substring(0, 60)}", desc: ${data.description?.length || 0} chars`);
                 return data;
             }
-            console.log(`[Content] Waiting for job content (attempt ${attempt + 1}/${maxAttempts})...`);
+            console.log(`[Content] Waiting for job content (attempt ${attempt + 1}/${maxAttempts}) — title="${data.title}", desc=${data.description?.length || 0}...`);
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
         console.log("[Content] Final scrape attempt after all retries");
-        return scrapeJobData(); // Final attempt
+        return scrapeJobData();
     }
 
     // ── Extract Links from Job Description DOM ────────────────
@@ -729,7 +787,13 @@
                 };
             }
 
-            console.log(`[Content] Sending to pipeline: title=${!!jobData.title}, desc_len=${jobData.description?.length || 0}, ${domLinks.length} DOM links`);
+            const quality = [
+                jobData.title ? `title="${jobData.title.substring(0, 40)}"` : "title=MISSING",
+                jobData.company ? `company="${jobData.company}"` : "company=MISSING",
+                `desc=${jobData.description?.length || 0}chars`,
+                `links=${domLinks.length}`,
+            ].join(", ");
+            console.log(`[Content] Sending to pipeline: ${quality}`);
 
             // Send job data + DOM links to background pipeline
             const response = await chrome.runtime.sendMessage({

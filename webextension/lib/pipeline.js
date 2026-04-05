@@ -178,6 +178,9 @@ export class PipelineBuilder {
                 inputTransform: (input) => ({
                     ...input,
                     config: this.config,
+                    // robertaResult is injected into chainResult.data by background.js
+                    // after the pipeline runs, so it arrives here if passed in initial input
+                    robertaResult: input.robertaResult || null,
                 }),
             })
         );
@@ -226,7 +229,7 @@ export class PipelineBuilder {
     }
 
     /**
-     * Build the default full pipeline.
+     * Build the default full pipeline (includes JobAnalyzerTool).
      * @param {ToolRegistry} registry
      * @param {PipelineConfig} [config]
      * @returns {Chain}
@@ -238,6 +241,22 @@ export class PipelineBuilder {
             .withContentAggregation()
             .withJobAnalysis()
             .build();
+    }
+
+    /**
+     * Build a scraping-only pipeline (no JobAnalyzerTool).
+     * Use this when you want to run RoBERTa in parallel with scraping,
+     * then call JobAnalyzerTool separately with both results combined.
+     * @param {ToolRegistry} registry
+     * @param {PipelineConfig} [config]
+     * @returns {Chain}
+     */
+    static createScrapingOnly(registry, config = new PipelineConfig()) {
+        return new PipelineBuilder(registry, config)
+            .withLinkDetection()
+            .withLinkScraping()
+            .withContentAggregation()
+            .build("scraping_pipeline");
     }
 }
 

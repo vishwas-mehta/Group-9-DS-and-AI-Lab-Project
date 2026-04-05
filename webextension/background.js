@@ -1,13 +1,15 @@
 // ============================================================
 // Background Service Worker — Pipeline Orchestrator
-// This is the central hub. It receives job data from the content
-// script, runs the LangChain-inspired analysis pipeline, and
-// returns results.
 //
-// Architecture:
-//   content.js → sendMessage → background.js → Pipeline → Gemini
-//                                                  ↓
-//   content.js ← sendResponse ← background.js ← Results
+// New parallel architecture:
+//   content.js → sendMessage → background.js
+//       ├── RoBERTaTool (HF Inference API)  ─┐ parallel
+//       └── DetectLinks → Scrape → Aggregate ┘
+//                    ↓ (both complete)
+//              JobAnalyzerTool (Gemini)
+//              receives: RoBERTa score + scraped evidence
+//                    ↓
+//   content.js ← sendResponse ← Results
 // ============================================================
 
 import { ToolRegistry } from "./lib/langchain-core.js";
@@ -19,6 +21,7 @@ import {
 import { DetectLinksTool } from "./tools/link-detector.js";
 import { LinkScraperTool } from "./tools/link-scraper.js";
 import { JobAnalyzerTool } from "./tools/job-analyzer-tool.js";
+import { RoBERTaTool } from "./tools/roberta-tool.js";
 
 // ============================================================
 // Tool Registry Setup — Register all tools at startup
@@ -31,6 +34,7 @@ registry.register(new DetectLinksTool(), "scraping");
 registry.register(new LinkScraperTool(), "scraping");
 registry.register(new ContentAggregatorTool(), "processing");
 registry.register(new JobAnalyzerTool(), "analysis");
+registry.register(new RoBERTaTool(), "ml");
 
 console.log("[Background] Tool registry initialized:");
 console.log("[Background] Registered tools:", registry.listTools());
@@ -105,10 +109,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
  */
 async function handleAnalyzeJob(data, sender) {
     const { jobData, domLinks = [] } = data;
+    const tabId = sender.tab?.id;
 
     console.log("[Background] Starting standard analysis for:", jobData.title);
 
-    // Build pipeline with standard config
     const config = new PipelineConfig({
         enableLinkScraping: true,
         maxLinksToScrape: 5,
@@ -116,45 +120,50 @@ async function handleAnalyzeJob(data, sender) {
         analysisDepth: "standard",
     });
 
-    const pipeline = PipelineBuilder.createDefault(registry, config);
+    // Scraping-only pipeline (no JobAnalyzerTool) so we can run it in parallel with RoBERTa
+    const scrapingPipeline = PipelineBuilder.createScrapingOnly(registry, config);
 
-    // Log pipeline description
-    console.log("[Background] Pipeline:\n" + pipeline.describe());
-
-    // Send progress updates to content script
-    const tabId = sender.tab?.id;
     if (tabId) {
-        pipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
+        scrapingPipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
             sendProgressUpdate(tabId, {
                 step: stepIndex + 1,
-                totalSteps,
+                totalSteps: totalSteps + 2, // +1 RoBERTa +1 Gemini
                 label: stepLabel,
                 status: "running",
             });
         };
-
-        pipeline.onStepComplete = ({ stepIndex, stepLabel, totalSteps, result }) => {
-            sendProgressUpdate(tabId, {
-                step: stepIndex + 1,
-                totalSteps,
-                label: stepLabel,
-                status: result.success ? "complete" : "failed",
-            });
-        };
     }
 
-    // Run the pipeline
-    const chainResult = await pipeline.run(
-        { jobData, domLinks },
-        { tabId, url: sender.tab?.url }
+    sendProgressUpdate(tabId, { step: 1, totalSteps: 5, label: "Running ML model + scraping links", status: "running" });
+
+    // ── PHASE 1: RoBERTa + link scraping in parallel ──────────────────────
+    const [robertaResult, scrapingResult] = await Promise.all([
+        runRoBERTa(jobData, tabId),
+        scrapingPipeline.run({ jobData, domLinks }, { tabId, url: sender.tab?.url }),
+    ]);
+
+    if (!scrapingResult.success) {
+        throw new Error(scrapingResult.error);
+    }
+
+    // ── PHASE 2: Gemini combines both signals ─────────────────────────────
+    sendProgressUpdate(tabId, { step: 5, totalSteps: 5, label: "AI Job Legitimacy Analysis", status: "running" });
+
+    const jobAnalyzerTool = registry.get("job_analyzer");
+    const analysisResult = await jobAnalyzerTool.execute(
+        {
+            ...scrapingResult.data,
+            robertaResult,
+            config,
+        },
+        { tabId }
     );
 
-    if (!chainResult.success) {
-        throw new Error(chainResult.error);
+    if (!analysisResult.success) {
+        throw new Error(analysisResult.error);
     }
 
-    // Return the analysis result
-    return chainResult.data;
+    return analysisResult.data;
 }
 
 /**
@@ -166,29 +175,42 @@ async function handleAnalyzeJob(data, sender) {
  */
 async function handleAnalyzeJobQuick(data, sender) {
     const { jobData } = data;
+    const tabId = sender.tab?.id;
 
     console.log("[Background] Starting QUICK analysis for:", jobData.title);
 
     const config = PipelineConfig.quick();
 
-    // Build pipeline without link scraping
-    const pipeline = new PipelineBuilder(registry, config)
+    // Quick scraping pipeline (link detection + aggregation, no scraping)
+    const scrapingPipeline = new PipelineBuilder(registry, config)
         .withLinkDetection()
-        // Skip link scraping
         .withContentAggregation()
-        .withJobAnalysis()
-        .build("quick_analysis_pipeline");
+        .build("quick_scraping_pipeline");
 
-    const chainResult = await pipeline.run(
-        { jobData, domLinks: [] },
-        { tabId: sender.tab?.id }
-    );
+    sendProgressUpdate(tabId, { step: 1, totalSteps: 3, label: "Running ML model", status: "running" });
 
-    if (!chainResult.success) {
-        throw new Error(chainResult.error);
+    const [robertaResult, scrapingResult] = await Promise.all([
+        runRoBERTa(jobData, tabId),
+        scrapingPipeline.run({ jobData, domLinks: [] }, { tabId }),
+    ]);
+
+    if (!scrapingResult.success) {
+        throw new Error(scrapingResult.error);
     }
 
-    return chainResult.data;
+    sendProgressUpdate(tabId, { step: 3, totalSteps: 3, label: "AI Job Legitimacy Analysis", status: "running" });
+
+    const jobAnalyzerTool = registry.get("job_analyzer");
+    const analysisResult = await jobAnalyzerTool.execute(
+        { ...scrapingResult.data, robertaResult, config },
+        { tabId }
+    );
+
+    if (!analysisResult.success) {
+        throw new Error(analysisResult.error);
+    }
+
+    return analysisResult.data;
 }
 
 /**
@@ -200,41 +222,76 @@ async function handleAnalyzeJobQuick(data, sender) {
  */
 async function handleAnalyzeJobDeep(data, sender) {
     const { jobData, domLinks = [] } = data;
+    const tabId = sender.tab?.id;
 
     console.log("[Background] Starting DEEP analysis for:", jobData.title);
 
     const config = PipelineConfig.deep();
 
-    const pipeline = PipelineBuilder.createDefault(registry, config);
+    const scrapingPipeline = PipelineBuilder.createScrapingOnly(registry, config);
 
-    // Send progress updates
-    const tabId = sender.tab?.id;
     if (tabId) {
-        pipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
+        scrapingPipeline.onStepStart = ({ stepIndex, stepLabel, totalSteps }) => {
             sendProgressUpdate(tabId, {
                 step: stepIndex + 1,
-                totalSteps,
+                totalSteps: totalSteps + 2,
                 label: stepLabel,
                 status: "running",
             });
         };
     }
 
-    const chainResult = await pipeline.run(
-        { jobData, domLinks },
-        { tabId, url: sender.tab?.url }
-    );
+    sendProgressUpdate(tabId, { step: 1, totalSteps: 6, label: "Running ML model + scraping links (deep)", status: "running" });
 
-    if (!chainResult.success) {
-        throw new Error(chainResult.error);
+    const [robertaResult, scrapingResult] = await Promise.all([
+        runRoBERTa(jobData, tabId),
+        scrapingPipeline.run({ jobData, domLinks }, { tabId, url: sender.tab?.url }),
+    ]);
+
+    if (!scrapingResult.success) {
+        throw new Error(scrapingResult.error);
     }
 
-    return chainResult.data;
+    sendProgressUpdate(tabId, { step: 6, totalSteps: 6, label: "AI Job Legitimacy Analysis (deep)", status: "running" });
+
+    const jobAnalyzerTool = registry.get("job_analyzer");
+    const analysisResult = await jobAnalyzerTool.execute(
+        { ...scrapingResult.data, robertaResult, config },
+        { tabId }
+    );
+
+    if (!analysisResult.success) {
+        throw new Error(analysisResult.error);
+    }
+
+    return analysisResult.data;
 }
 
 // ============================================================
 // Utility Functions
 // ============================================================
+
+/**
+ * Run the RoBERTa ML tool, always resolving (never rejecting) so it
+ * can be used safely in Promise.all alongside other pipeline steps.
+ *
+ * @param {Object} jobData
+ * @param {number|undefined} tabId
+ * @returns {Promise<Object>} robertaResult data
+ */
+async function runRoBERTa(jobData, tabId) {
+    const robertaTool = registry.get("roberta_analyzer");
+    if (!robertaTool) {
+        return { skipped: true, reason: "Tool not registered" };
+    }
+    try {
+        const result = await robertaTool.execute({ jobData }, { tabId });
+        return result.data;
+    } catch (err) {
+        console.warn("[Background] RoBERTa error:", err.message);
+        return { skipped: true, reason: err.message };
+    }
+}
 
 /**
  * Send a progress update to the content script.

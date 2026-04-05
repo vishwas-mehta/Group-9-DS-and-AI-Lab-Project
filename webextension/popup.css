@@ -204,3 +204,17 @@ body {
     padding-top: 8px;
     border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
+/* ── Key label badges ─────────────────────────────────── */
+.popup-required {
+    font-size: 10px;
+    color: #ff7b72;
+    font-weight: 400;
+    margin-left: 6px;
+}
+
+.popup-optional {
+    font-size: 10px;
+    color: #58a6ff;
+    font-weight: 400;
+    margin-left: 6px;
+}

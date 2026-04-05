@@ -24,25 +24,36 @@
     </div>
 
     <div class="popup-section">
-      <label for="api-key" class="popup-label">Gemini API Key</label>
+      <label for="api-key" class="popup-label">Gemini API Key <span class="popup-required">required</span></label>
       <div class="input-group">
         <input type="password" id="api-key" class="popup-input" placeholder="Enter your Gemini API key"
           spellcheck="false" autocomplete="off" />
         <button class="toggle-visibility" id="toggle-key" title="Show/Hide Key">👁️</button>
       </div>
-      <button class="popup-btn" id="save-btn">
-        <span class="btn-text">Save Key</span>
-      </button>
     </div>
+
+    <div class="popup-section">
+      <label for="hf-api-key" class="popup-label">HuggingFace Token <span class="popup-optional">optional · enables RoBERTa ML model</span></label>
+      <div class="input-group">
+        <input type="password" id="hf-api-key" class="popup-input" placeholder="hf_..."
+          spellcheck="false" autocomplete="off" />
+        <button class="toggle-visibility" id="toggle-hf-key" title="Show/Hide Key">👁️</button>
+      </div>
+    </div>
+
+    <button class="popup-btn" id="save-btn">
+      <span class="btn-text">Save Keys</span>
+    </button>
 
     <div class="popup-info">
       <p>📌 Navigate to a LinkedIn job listing, then click the <strong>"🔍 Analyze Job"</strong> button on the page.</p>
+      <p>🤖 With a HuggingFace token, a fine-tuned RoBERTa model (F1=0.91) runs alongside Gemini for stronger predictions.</p>
     </div>
 
     <div class="popup-footer">
-      <span>v1.0.0</span>
+      <span>v2.0.0</span>
       <span>·</span>
-      <span>Powered by Gemini</span>
+      <span>Gemini + RoBERTa</span>
     </div>
   </div>
 

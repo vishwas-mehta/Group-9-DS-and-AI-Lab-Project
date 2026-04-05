@@ -131,7 +131,7 @@ export class JobAnalyzerTool extends BaseTool {
      * @returns {Promise<ToolResult>}
      */
     async _execute(input, context) {
-        const { jobData, links = [], scrapedContent = [], config = {} } = input;
+        const { jobData, links = [], scrapedContent = [], config = {}, robertaResult } = input;
 
         // Get API key
         const apiKey = await this._getApiKey();
@@ -146,7 +146,7 @@ export class JobAnalyzerTool extends BaseTool {
         const depthConfig = ANALYSIS_DEPTHS[depth] || ANALYSIS_DEPTHS.standard;
 
         // Build the prompt
-        const prompt = this._buildPrompt(jobData, links, scrapedContent, depthConfig);
+        const prompt = this._buildPrompt(jobData, links, scrapedContent, depthConfig, robertaResult);
 
         // Call Gemini API
         const analysisResult = await this._callGemini(
@@ -180,7 +180,7 @@ export class JobAnalyzerTool extends BaseTool {
      * @param {Object} depthConfig
      * @returns {{ systemInstruction: string, userMessage: string }}
      */
-    _buildPrompt(jobData, links, scrapedContent, depthConfig) {
+    _buildPrompt(jobData, links, scrapedContent, depthConfig, robertaResult = null) {
         // Build red flags reference
         const redFlagsText = Object.entries(RED_FLAGS_TAXONOMY)
             .map(([category, flags]) => {
@@ -189,9 +189,18 @@ export class JobAnalyzerTool extends BaseTool {
             })
             .join("\n");
 
+        const today = new Date();
+        const currentDate = today.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
         const systemInstruction = `You are a Job Legitimacy Analyzer — an expert system designed to protect job seekers from fraudulent postings.
 
-Your task is to analyze a job listing (including any content scraped from external links) and determine its legitimacy.
+TODAY'S DATE: ${currentDate}. Use this as the reference for all date-related reasoning. Do NOT assume any other date or year.
+
+Your task is to analyze a job listing using TWO independent signals:
+1. A fine-tuned RoBERTa ML model prediction (statistical pattern matching on 17,880 training examples)
+2. Evidence gathered from the job listing and any scraped external links
+
+Combine both signals for your final verdict. The ML model is statistically reliable (F1=0.91, AUC=0.99) — treat it as a strong prior. If it says FRAUDULENT, strong contrary evidence is needed to override it.
 
 ${depthConfig.systemPromptAddition}
 
@@ -234,8 +243,29 @@ RESPONSE FORMAT — Respond ONLY with valid JSON (no markdown, no code fences):
     }
 }`;
 
+        // Build RoBERTa section (prepended for high prominence)
+        let robertaSection = "";
+        if (robertaResult && !robertaResult.skipped) {
+            const bar = "═".repeat(50);
+            robertaSection = `${bar}
+🤖 ML MODEL PREDICTION — RoBERTa (aditya963/fraud-job-classifier)
+   Trained on 17,880 job postings | F1=0.91 | AUC=0.99 | Threshold=0.87
+${bar}
+   Fraud Probability : ${robertaResult.fraudPercent}%
+   Model Verdict     : ${robertaResult.verdict}
+   Confidence        : ${robertaResult.confidence}
+   (${robertaResult.fraudPercent}% ≥ ${(robertaResult.threshold * 100).toFixed(0)}% threshold → ${robertaResult.verdict})
+${bar}
+
+⚠️  Give this ML signal SIGNIFICANT WEIGHT. If verdict is FRAUDULENT, you need clear positive evidence to rate the job as SAFE.
+
+`;
+        } else if (robertaResult && robertaResult.skipped) {
+            robertaSection = `[ML Model: unavailable — ${robertaResult.reason || "skipped"}. Base analysis on evidence only.]\n\n`;
+        }
+
         // Build user message with all available data
-        let userMessage = `=== JOB LISTING ANALYSIS REQUEST ===
+        let userMessage = robertaSection + `=== JOB LISTING ANALYSIS REQUEST ===
 
 PRIMARY LISTING (from LinkedIn):
 
