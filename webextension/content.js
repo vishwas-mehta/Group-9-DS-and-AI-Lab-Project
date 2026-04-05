@@ -837,63 +837,164 @@
         removeOverlay();
 
         const verdictConfig = {
-            SAFE: { emoji: "✅", label: "Safe to Apply", color: "#00c853", bg: "rgba(0, 200, 83, 0.1)" },
-            SUSPICIOUS: { emoji: "⚠️", label: "Suspicious", color: "#ff9100", bg: "rgba(255, 145, 0, 0.1)" },
-            LIKELY_FAKE: { emoji: "❌", label: "Likely Fake", color: "#ff1744", bg: "rgba(255, 23, 68, 0.1)" },
+            SAFE:        { emoji: "✅", label: "Safe to Apply", color: "#00c853", bg: "rgba(0,200,83,0.1)",    badge: "ljp-badge-safe" },
+            SUSPICIOUS:  { emoji: "⚠️", label: "Suspicious",    color: "#ff9100", bg: "rgba(255,145,0,0.1)", badge: "ljp-badge-warn" },
+            LIKELY_FAKE: { emoji: "❌", label: "Likely Fake",   color: "#ff1744", bg: "rgba(255,23,68,0.1)",  badge: "ljp-badge-fake" },
         };
-
         const v = verdictConfig[result.verdict] || verdictConfig["SUSPICIOUS"];
 
+        // ── RoBERTa badge ───────────────────────────────────
+        const rr = result.robertaResult;
+        const robertaBadge = (rr && !rr.skipped)
+            ? `<span class="ljp-ml-badge ${rr.verdict === 'FRAUDULENT' ? 'ljp-ml-fraud' : 'ljp-ml-legit'}">
+                 🤖 RoBERTa: ${rr.fraudPercent}% fraud
+               </span>`
+            : `<span class="ljp-ml-badge ljp-ml-skip">🤖 ML: no token</span>`;
+
+        // ── Risk score bars ─────────────────────────────────
+        const rs = result.riskScore || {};
+        const riskItems = [
+            { label: "Description",  key: "descriptionQuality" },
+            { label: "Company",      key: "companyLegitimacy" },
+            { label: "Compensation", key: "compensationFlags" },
+            { label: "Application",  key: "applicationProcess" },
+            { label: "Ext. Links",   key: "externalContent" },
+        ];
+        const riskBarsHtml = riskItems.map(({ label, key }) => {
+            const score = rs[key] ?? 5;
+            const pct = score * 10;
+            const color = score >= 7 ? "#ff1744" : score >= 4 ? "#ff9100" : "#00c853";
+            return `
+            <div class="ljp-risk-row">
+              <span class="ljp-risk-label">${label}</span>
+              <div class="ljp-risk-bar-track">
+                <div class="ljp-risk-bar-fill" style="width:${pct}%;background:${color}"></div>
+              </div>
+              <span class="ljp-risk-score" style="color:${color}">${score}/10</span>
+            </div>`;
+        }).join("");
+
+        // ── Key findings (red flags) ────────────────────────
+        const findingsHtml = (result.reasons || []).map(r =>
+            `<div class="ljp-finding ljp-finding-red">
+               <span class="ljp-finding-icon">🔴</span>
+               <span>${escapeHtml(r)}</span>
+             </div>`
+        ).join("") || `<p class="ljp-empty">No red flags identified.</p>`;
+
+        // ── Positive signals ────────────────────────────────
+        const posSignals = result.positiveSignals || [];
+        const posHtml = posSignals.length
+            ? posSignals.map(s =>
+                `<div class="ljp-finding ljp-finding-green">
+                   <span class="ljp-finding-icon">✅</span>
+                   <span>${escapeHtml(s)}</span>
+                 </div>`
+              ).join("")
+            : `<p class="ljp-empty">No positive signals found.</p>`;
+
+        // ── External links ──────────────────────────────────
+        const links = result.detectedLinks || [];
+        const scrapedMap = new Map(
+            (result.scrapedContent || []).map(s => [s.url, s])
+        );
+        let linksHtml = "";
+        if (links.length > 0) {
+            const categoryIcon = { job_board: "💼", career_page: "🏢", social_media: "👥", form: "📝", document: "📄", other: "🔗" };
+            const suspiciousCategories = new Set(["form", "document"]);
+            linksHtml = links.map(link => {
+                const scraped = scrapedMap.get(link.url);
+                const failed  = scraped && !scraped.success;
+                const isForm  = suspiciousCategories.has(link.category);
+                const flagClass = (failed || isForm) ? "ljp-link-suspicious" : "ljp-link-normal";
+                const icon  = categoryIcon[link.category] || "🔗";
+                const warn  = failed ? " ⚠️ failed to load" : isForm ? " ⚠️ form/doc" : "";
+                const short = link.url.replace(/^https?:\/\//, "").substring(0, 50);
+                return `
+                <a class="ljp-ext-link ${flagClass}" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
+                  <span class="ljp-ext-icon">${icon}</span>
+                  <span class="ljp-ext-text">
+                    <span class="ljp-ext-url">${escapeHtml(short)}${link.url.length > 53 ? "…" : ""}</span>
+                    <span class="ljp-ext-meta">${escapeHtml(link.category)}${warn}</span>
+                  </span>
+                  <span class="ljp-ext-arrow">↗</span>
+                </a>`;
+            }).join("");
+        }
+
+        // ── Build panel ─────────────────────────────────────
         const overlay = document.createElement("div");
         overlay.id = "ljp-overlay";
         overlay.innerHTML = `
       <div class="ljp-overlay-backdrop" id="ljp-backdrop"></div>
       <div class="ljp-results-panel">
+
         <div class="ljp-results-header">
-          <div class="ljp-results-title">
-            <span class="ljp-logo">🛡️</span>
-            Job Legitimacy Report
-          </div>
+          <div class="ljp-results-title"><span class="ljp-logo">🛡️</span> Job Legitimacy Report</div>
           <button class="ljp-close-btn" id="ljp-close-btn">✕</button>
         </div>
+
         <div class="ljp-job-info">
           <div class="ljp-job-name">${escapeHtml(jobData.title || "Unknown Job")}</div>
-          <div class="ljp-company-name">${escapeHtml(jobData.company || "Unknown Company")}</div>
+          <div class="ljp-job-meta">
+            ${escapeHtml(jobData.company || "Unknown Company")}
+            ${jobData.location ? ` <span class="ljp-dot">·</span> ${escapeHtml(jobData.location)}` : ""}
+          </div>
         </div>
-        <div class="ljp-verdict-card" style="background: ${v.bg}; border-left: 4px solid ${v.color};">
-          <div class="ljp-verdict-row">
+
+        <div class="ljp-verdict-card" style="background:${v.bg};border-left:4px solid ${v.color}">
+          <div class="ljp-verdict-top">
             <span class="ljp-verdict-emoji">${v.emoji}</span>
-            <div>
-              <div class="ljp-verdict-label" style="color: ${v.color};">${v.label}</div>
-              <div class="ljp-confidence">Confidence: ${result.confidence}%</div>
+            <div class="ljp-verdict-info">
+              <div class="ljp-verdict-label" style="color:${v.color}">${v.label}</div>
+              <div class="ljp-verdict-sub">Gemini confidence: ${result.confidence}%</div>
             </div>
+            ${robertaBadge}
           </div>
           <div class="ljp-confidence-bar">
-            <div class="ljp-confidence-fill" style="width: ${result.confidence}%; background: ${v.color};"></div>
+            <div class="ljp-confidence-fill" style="width:${result.confidence}%;background:${v.color}"></div>
           </div>
         </div>
+
+        <div class="ljp-section">
+          <div class="ljp-section-title">📊 Risk Breakdown</div>
+          <div class="ljp-risk-grid">${riskBarsHtml}</div>
+        </div>
+
         <div class="ljp-section">
           <div class="ljp-section-title">📋 Summary</div>
           <p class="ljp-summary">${escapeHtml(result.summary || "")}</p>
         </div>
+
         <div class="ljp-section">
-          <div class="ljp-section-title">🔎 Key Findings</div>
-          <ul class="ljp-reasons">
-            ${(result.reasons || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("")}
-          </ul>
+          <div class="ljp-section-title">🔴 Red Flags (${(result.reasons || []).length})</div>
+          <div class="ljp-findings">${findingsHtml}</div>
         </div>
+
+        <div class="ljp-section">
+          <div class="ljp-section-title">✅ Positive Signals (${posSignals.length})</div>
+          <div class="ljp-findings">${posHtml}</div>
+        </div>
+
+        ${links.length > 0 ? `
+        <div class="ljp-section">
+          <div class="ljp-section-title">🔗 External Links Found (${links.length})</div>
+          <p class="ljp-links-hint">Click any link to verify credibility yourself. ⚠️ = suspicious.</p>
+          <div class="ljp-links-list">${linksHtml}</div>
+        </div>` : ""}
+
         ${result.tips ? `
-        <div class="ljp-section ljp-tip">
+        <div class="ljp-tip-box">
           <div class="ljp-section-title">💡 Tip</div>
           <p>${escapeHtml(result.tips)}</p>
         </div>` : ""}
-        <div class="ljp-footer">Powered by Gemini AI · Results are advisory only</div>
+
+        <div class="ljp-footer">Powered by Gemini AI + RoBERTa ML · Advisory only</div>
       </div>
     `;
 
         document.body.appendChild(overlay);
         requestAnimationFrame(() => overlay.classList.add("ljp-visible"));
-
         document.getElementById("ljp-close-btn").addEventListener("click", removeOverlay);
         document.getElementById("ljp-backdrop").addEventListener("click", removeOverlay);
     }

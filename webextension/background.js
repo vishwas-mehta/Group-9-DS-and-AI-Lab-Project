@@ -163,7 +163,13 @@ async function handleAnalyzeJob(data, sender) {
         throw new Error(analysisResult.error);
     }
 
-    return analysisResult.data;
+    // Attach links + robertaResult so the UI can show them
+    return {
+        ...analysisResult.data,
+        robertaResult,
+        detectedLinks: scrapingResult.data?.links || [],
+        scrapedContent: scrapingResult.data?.scrapedContent || [],
+    };
 }
 
 /**
@@ -210,7 +216,12 @@ async function handleAnalyzeJobQuick(data, sender) {
         throw new Error(analysisResult.error);
     }
 
-    return analysisResult.data;
+    return {
+        ...analysisResult.data,
+        robertaResult,
+        detectedLinks: scrapingResult.data?.links || [],
+        scrapedContent: scrapingResult.data?.scrapedContent || [],
+    };
 }
 
 /**
@@ -264,7 +275,12 @@ async function handleAnalyzeJobDeep(data, sender) {
         throw new Error(analysisResult.error);
     }
 
-    return analysisResult.data;
+    return {
+        ...analysisResult.data,
+        robertaResult,
+        detectedLinks: scrapingResult.data?.links || [],
+        scrapedContent: scrapingResult.data?.scrapedContent || [],
+    };
 }
 
 // ============================================================
