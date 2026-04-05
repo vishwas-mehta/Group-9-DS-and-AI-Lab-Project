@@ -12,3 +12,13 @@ langchain-community
 docx2txt
 pypdf
 unstructured
+
+# ML pipeline dependencies (pipeline_demo.py, train.py, eval.py)
+pandas
+numpy
+torch
+transformers
+datasets
+scikit-learn
+optuna
+matplotlib
